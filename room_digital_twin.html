@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Digital Twin Sandbox</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f17;
+            color: #e2e8f0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Custom Scrollbar for Controls */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(18, 24, 38, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Custom Styled Sliders */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #1e293b;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -5px;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            transition: transform 0.1s ease, background-color 0.2s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #60a5fa;
+        }
+
+        .toggle-btn-active {
+            background: linear-gradient(135deg, #059669, #10b981);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+        }
+        .toggle-btn-inactive {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+        }
+
+        /* Canvas Chart container */
+        canvas.sparkline {
+            width: 100% !important;
+            height: 32px !important;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen relative flex flex-col justify-between overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="w-full z-20 px-6 py-3 flex items-center justify-between glass-panel border-b border-slate-800/60">
+        <div class="flex items-center gap-3">
+            <h1 class="font-bold text-lg text-slate-100 tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-cube text-blue-500"></i>
+            </h1>
+            <span id="viewModeBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-900/50 text-blue-300 border border-blue-500/30 uppercase tracking-wider">
+                Inside View
+            </span>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button id="toggleViewBtn" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md shadow-blue-900/40 flex items-center gap-2">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> <span id="toggleViewText">Step Outside</span>
+            </button>
+            <button id="resetSimBtn" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-rose-600/80 hover:bg-rose-500 text-white transition-all shadow-md shadow-rose-950/40 flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-right"></i> Reset
+            </button>
+        </div>
+    </header>
+
+    <!-- 3D Canvas Background Container -->
+    <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+    <!-- Right Control Panel Sidebar -->
+    <aside class="absolute top-16 right-5 bottom-24 w-80 z-20 glass-panel rounded-2xl p-4 flex flex-col justify-between overflow-y-auto">
+        <div class="space-y-4">
+            
+            <!-- Outside Controls Section (Shown when OUTSIDE VIEW) -->
+            <div id="outdoorControlsGroup" class="space-y-3 hidden">
+                <div class="text-xs font-bold text-blue-400 uppercase tracking-wider border-b border-slate-700/60 pb-1.5 flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-sun text-amber-400"></i> Outdoor Conditions
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>External Temp</span>
+                        <span id="valExtTemp" class="text-blue-400 font-semibold">35.0 °C</span>
+                    </div>
+                    <input type="range" id="sliderExtTemp" min="10" max="50" step="0.5" value="35">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>External Humidity (RH)</span>
+                        <span id="valExtHumidity" class="text-blue-400 font-semibold">40 %</span>
+                    </div>
+                    <input type="range" id="sliderExtHumidity" min="0" max="100" step="1" value="40">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>Wall Permeability (U)</span>
+                        <span id="valWallPerm" class="text-blue-400 font-semibold">1.50 W/m²K</span>
+                    </div>
+                    <input type="range" id="sliderWallPerm" min="0.1" max="5.0" step="0.05" value="1.5">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>Sun Intensity</span>
+                        <span id="valSunIntensity" class="text-blue-400 font-semibold">170 W/m²</span>
+                    </div>
+                    <input type="range" id="sliderSunIntensity" min="0" max="1000" step="10" value="170">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>Infiltration ACH</span>
+                        <span id="valInfiltration" class="text-blue-400 font-semibold">0.50 ACH</span>
+                    </div>
+                    <input type="range" id="sliderInfiltration" min="0" max="5" step="0.1" value="0.5">
+                </div>
+            </div>
+
+            <!-- Indoor / Room Simulation Controls (Shown in INSIDE VIEW) -->
+            <div id="indoorControlsGroup" class="space-y-3.5">
+                <div class="text-xs font-bold text-blue-400 uppercase tracking-wider border-b border-slate-700/60 pb-1.5 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-blue-400"></i> Room Controls
+                </div>
+
+                <!-- AC Controls -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>AC Setpoint</span>
+                        <span id="valAcSetpoint" class="text-blue-400 font-semibold">24.0 °C</span>
+                    </div>
+                    <input type="range" id="sliderAcSetpoint" min="16" max="30" step="0.5" value="24">
+
+                    <div class="flex justify-between text-xs font-medium text-slate-300 mt-1">
+                        <span>AC Capacity</span>
+                        <span id="valAcCapacity" class="text-blue-400 font-semibold">3500 W</span>
+                    </div>
+                    <input type="range" id="sliderAcCapacity" min="1000" max="8000" step="100" value="3500">
+                </div>
+
+                <!-- Sunroof Tint -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>Sunroof Tint</span>
+                        <span id="valSunroofTint" class="text-blue-400 font-semibold">50 %</span>
+                    </div>
+                    <input type="range" id="sliderSunroofTint" min="0" max="100" step="1" value="50">
+                </div>
+
+                <!-- Lighting -->
+                <div class="space-y-1 pt-1 border-t border-slate-800">
+                    <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-regular fa-lightbulb"></i> Lighting
+                    </div>
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>LED Wattage (each)</span>
+                        <span id="valLedWattage" class="text-blue-400 font-semibold">40 W</span>
+                    </div>
+                    <input type="range" id="sliderLedWattage" min="0" max="100" step="5" value="40">
+                </div>
+
+                <!-- Computers -->
+                <div class="space-y-1 pt-1 border-t border-slate-800">
+                    <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-desktop"></i> Computers
+                    </div>
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>PC Power Rating</span>
+                        <span id="valPcPower" class="text-blue-400 font-semibold">300 W</span>
+                    </div>
+                    <input type="range" id="sliderPcPower" min="100" max="1000" step="50" value="300">
+
+                    <div class="flex justify-between text-xs font-medium text-slate-300 mt-1">
+                        <span>CPU+GPU Usage</span>
+                        <span id="valCpuUsage" class="text-blue-400 font-semibold">41 %</span>
+                    </div>
+                    <input type="range" id="sliderCpuUsage" min="5" max="100" step="1" value="41">
+                </div>
+
+                <!-- Exhaust Fan -->
+                <div class="space-y-2 pt-1 border-t border-slate-800">
+                    <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-fan"></i> Exhaust Fan
+                    </div>
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>Fan RPM</span>
+                        <span id="valFanRpm" class="text-blue-400 font-semibold">287 RPM</span>
+                    </div>
+                    <input type="range" id="sliderFanRpm" min="0" max="2000" step="25" value="287">
+
+                    <button id="toggleFanAutoBtn" class="w-full py-1.5 px-3 rounded-lg text-xs font-medium border border-emerald-500/40 text-emerald-300 bg-emerald-950/40 hover:bg-emerald-900/50 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-robot"></i> <span id="fanAutoText">Fan Auto Mode: ON</span>
+                    </button>
+                </div>
+
+                <!-- Occupancy & Speed -->
+                <div class="space-y-1.5 pt-1 border-t border-slate-800">
+                    <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-users"></i> Occupancy
+                    </div>
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>People in Room</span>
+                        <span id="valPeople" class="text-blue-400 font-semibold">2</span>
+                    </div>
+                    <input type="range" id="sliderPeople" min="0" max="8" step="1" value="2">
+
+                    <div class="flex justify-between text-xs font-medium text-slate-300 mt-1">
+                        <span>Simulation Speed</span>
+                        <span id="valSimSpeed" class="text-blue-400 font-semibold">108 ×</span>
+                    </div>
+                    <input type="range" id="sliderSimSpeed" min="1" max="1000" step="1" value="108">
+                </div>
+            </div>
+        </div>
+
+        <!-- Run / Stop Simulation Button -->
+        <div class="pt-3 border-t border-slate-700/60 mt-3">
+            <button id="toggleSimRunBtn" class="w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 toggle-btn-active transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play" id="simRunIcon"></i> <span id="simRunText">Run Simulation</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Bottom Telemetry & Sparkline Dashboard Bar -->
+    <footer class="w-full z-20 px-5 pb-3">
+        <div class="glass-panel rounded-2xl p-3 flex flex-col gap-2 max-w-7xl mx-auto border border-slate-800/80">
+            
+            <!-- Numerical Metrics Header Bar -->
+            <div class="flex items-center justify-between text-xs border-b border-slate-800/80 pb-2 px-1">
+                <div class="flex items-center gap-6">
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">Temperature</span>
+                        <span id="metricTemp" class="text-base font-extrabold text-rose-400">29.3°C</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">Humidity</span>
+                        <span id="metricHumidity" class="text-base font-extrabold text-teal-400">0%</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">CO₂</span>
+                        <span id="metricCo2" class="text-base font-extrabold text-amber-400">896 ppm</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">O₂</span>
+                        <span id="metricO2" class="text-base font-extrabold text-sky-400">20.9%</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">Luminosity</span>
+                        <span id="metricLuminosity" class="text-base font-extrabold text-yellow-300">810 lux</span>
+                    </div>
+                </div>
+
+                <!-- Simulation Real-Time Clock & Indicators -->
+                <div class="flex items-center gap-3 font-mono text-xs text-slate-400">
+                    <span id="simTimeDisplay">t = 0h 00m 00s</span>
+                    <span id="acStatusBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500/40">AC: ON</span>
+                    <span id="fanStatusBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-500/40">FAN: 287 RPM</span>
+                </div>
+            </div>
+
+            <!-- Sparkline Mini Charts Grid -->
+            <div class="grid grid-cols-5 gap-3 pt-0.5">
+                <!-- Temp Sparkline -->
+                <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800/80 flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400 mb-1">
+                        <span>TEMPERATURE [°C]</span>
+                        <span id="sparkValTemp" class="text-rose-400">29.3°C</span>
+                    </div>
+                    <canvas id="chartTemp" class="sparkline"></canvas>
+                </div>
+
+                <!-- Humidity Sparkline -->
+                <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800/80 flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400 mb-1">
+                        <span>HUMIDITY [%]</span>
+                        <span id="sparkValHumidity" class="text-teal-400">0.0%</span>
+                    </div>
+                    <canvas id="chartHumidity" class="sparkline"></canvas>
+                </div>
+
+                <!-- CO2 Sparkline -->
+                <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800/80 flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400 mb-1">
+                        <span>CO₂ [PPM]</span>
+                        <span id="sparkValCo2" class="text-amber-400">895.7 ppm</span>
+                    </div>
+                    <canvas id="chartCo2" class="sparkline"></canvas>
+                </div>
+
+                <!-- O2 Sparkline -->
+                <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800/80 flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400 mb-1">
+                        <span>O₂ [%]</span>
+                        <span id="sparkValO2" class="text-sky-400">20.9%</span>
+                    </div>
+                    <canvas id="chartO2" class="sparkline"></canvas>
+                </div>
+
+                <!-- Luminosity Sparkline -->
+                <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800/80 flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400 mb-1">
+                        <span>LUMINOSITY [LUX]</span>
+                        <span id="sparkValLux" class="text-yellow-300">810.0 lux</span>
+                    </div>
+                    <canvas id="chartLux" class="sparkline"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+    <!-- JS Application Code -->
+    <script>
+        // --- SIMULATION PARAMETERS STATE ---
+        const state = {
+            viewMode: 'INSIDE', // 'INSIDE' | 'OUTSIDE'
+            isRunning: true,
+            elapsedSeconds: 0,
+            
+            // Outdoor Parameters
+            extTemp: 35.0,        // °C
+            extHumidity: 40,      // %
+            wallPermeability: 1.5,// W/m²K
+            sunIntensity: 170,    // W/m²
+            infiltrationACH: 0.5, // Air Changes per hour
+            
+            // Room Controls
+            acSetpoint: 24.0,     // °C
+            acCapacity: 3500,     // Watts
+            acState: true,
+            sunroofTint: 50,      // %
+            
+            // Equipment & Occupancy
+            ledWattage: 40,       // W each (2 LEDs)
+            pcPower: 300,         // W each
+            cpuUsage: 41,         // %
+            
+            fanRpm: 287,
+            fanAutoMode: true,
+            
+            peopleCount: 2,
+            simSpeed: 108,
+            
+            // Dynamic Environmental Telemetry State
+            temp: 29.3,
+            humidity: 12.0,
+            co2: 896.0,
+            o2: 20.90,
+            lux: 810.0
+        };
+
+        // Telemetry History Buffers for Charts
+        const MAX_HIST = 40;
+        const historyData = {
+            temp: Array(MAX_HIST).fill(29.3),
+            humidity: Array(MAX_HIST).fill(12.0),
+            co2: Array(MAX_HIST).fill(896.0),
+            o2: Array(MAX_HIST).fill(20.90),
+            lux: Array(MAX_HIST).fill(810.0)
+        };
+
+        // --- THREE.JS SCENE SETUP ---
+        let scene, camera, renderer, controls;
+        let roomGroup, roofMesh, lawnMesh;
+        let walls = {}; // Store all 4 solid interior/exterior walls
+        let fanBladesMesh, acMesh, acLedMesh;
+        let ledLight1, ledLight2, ledMesh1, ledMesh2;
+        let peopleAvatars = [];
+        let pcDesks = [];
+
+        const ROOM_DIM = { width: 6, height: 3.2, depth: 5 }; // Room dimensions
+
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0b0f17);
+
+            camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfff7e6, 0.85);
+            sunLight.position.set(12, 20, 10);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 1024;
+            sunLight.shadow.mapSize.height = 1024;
+            scene.add(sunLight);
+
+            // Ground Lawn (Outside View)
+            const lawnGeo = new THREE.PlaneGeometry(100, 100);
+            const lawnMat = new THREE.MeshStandardMaterial({ color: 0x5a8f52, roughness: 0.8 });
+            lawnMesh = new THREE.Mesh(lawnGeo, lawnMat);
+            lawnMesh.rotation.x = -Math.PI / 2;
+            lawnMesh.position.y = -0.01;
+            lawnMesh.receiveShadow = true;
+            scene.add(lawnMesh);
+
+            // Build Room Structure
+            buildRoom();
+
+            // Set initial camera view
+            setCameraView(state.viewMode);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function buildRoom() {
+            roomGroup = new THREE.Group();
+            scene.add(roomGroup);
+
+            // Floor
+            const floorGeo = new THREE.BoxGeometry(ROOM_DIM.width, 0.1, ROOM_DIM.depth);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0xeed9b3, roughness: 0.4 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.position.y = -0.05;
+            floor.receiveShadow = true;
+            roomGroup.add(floor);
+
+            // Ceiling / Roof
+            const roofGeo = new THREE.BoxGeometry(ROOM_DIM.width + 0.2, 0.15, ROOM_DIM.depth + 0.2);
+            const roofMat = new THREE.MeshStandardMaterial({ color: 0x1e2533, roughness: 0.5 });
+            roofMesh = new THREE.Mesh(roofGeo, roofMat);
+            roofMesh.position.y = ROOM_DIM.height + 0.075;
+            roomGroup.add(roofMesh);
+
+            // Wall Material (Solid inside, dynamic clipping/fade in outside view)
+            const wallMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xf1f5f9, 
+                roughness: 0.8,
+                transparent: true,
+                opacity: 1.0,
+                side: THREE.DoubleSide
+            });
+
+            // Build All 4 Enclosing Walls
+            const backGeo = new THREE.PlaneGeometry(ROOM_DIM.width, ROOM_DIM.height);
+            const sideGeo = new THREE.PlaneGeometry(ROOM_DIM.depth, ROOM_DIM.height);
+
+            // Back Wall (-Z)
+            walls.back = new THREE.Mesh(backGeo, wallMaterial.clone());
+            walls.back.position.set(0, ROOM_DIM.height / 2, -ROOM_DIM.depth / 2);
+            roomGroup.add(walls.back);
+
+            // Front Wall (+Z)
+            walls.front = new THREE.Mesh(backGeo, wallMaterial.clone());
+            walls.front.position.set(0, ROOM_DIM.height / 2, ROOM_DIM.depth / 2);
+            walls.front.rotation.y = Math.PI;
+            roomGroup.add(walls.front);
+
+            // Left Wall (-X)
+            walls.left = new THREE.Mesh(sideGeo, wallMaterial.clone());
+            walls.left.position.set(-ROOM_DIM.width / 2, ROOM_DIM.height / 2, 0);
+            walls.left.rotation.y = Math.PI / 2;
+            roomGroup.add(walls.left);
+
+            // Right Wall (+X)
+            walls.right = new THREE.Mesh(sideGeo, wallMaterial.clone());
+            walls.right.position.set(ROOM_DIM.width / 2, ROOM_DIM.height / 2, 0);
+            walls.right.rotation.y = -Math.PI / 2;
+            roomGroup.add(walls.right);
+
+            // LED Ceiling Lights
+            const ledGeo = new THREE.BoxGeometry(0.8, 0.04, 0.8);
+            const ledMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            
+            ledMesh1 = new THREE.Mesh(ledGeo, ledMat);
+            ledMesh1.position.set(-1.2, ROOM_DIM.height - 0.02, -0.5);
+            roomGroup.add(ledMesh1);
+
+            ledLight1 = new THREE.PointLight(0xfffaed, 1, 10);
+            ledLight1.position.set(-1.2, ROOM_DIM.height - 0.2, -0.5);
+            ledLight1.castShadow = true;
+            roomGroup.add(ledLight1);
+
+            ledMesh2 = new THREE.Mesh(ledGeo, ledMat);
+            ledMesh2.position.set(1.2, ROOM_DIM.height - 0.02, 0.8);
+            roomGroup.add(ledMesh2);
+
+            ledLight2 = new THREE.PointLight(0xfffaed, 1, 10);
+            ledLight2.position.set(1.2, ROOM_DIM.height - 0.2, 0.8);
+            ledLight2.castShadow = true;
+            roomGroup.add(ledLight2);
+
+            // Wall AC Unit (On Front Wall)
+            const acGroup = new THREE.Group();
+            const acBodyGeo = new THREE.BoxGeometry(1.2, 0.35, 0.25);
+            const acBodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+            acMesh = new THREE.Mesh(acBodyGeo, acBodyMat);
+            acGroup.add(acMesh);
+
+            const acLedGeo = new THREE.SphereGeometry(0.025, 16, 16);
+            const acLedMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+            acLedMesh = new THREE.Mesh(acLedGeo, acLedMat);
+            acLedMesh.position.set(0.4, -0.05, 0.13);
+            acGroup.add(acLedMesh);
+
+            acGroup.position.set(0, ROOM_DIM.height - 0.5, -ROOM_DIM.depth / 2 + 0.13);
+            roomGroup.add(acGroup);
+
+            // Exhaust Fan on Left Wall
+            const fanGroup = new THREE.Group();
+            const fanFrameGeo = new THREE.TorusGeometry(0.3, 0.04, 16, 32);
+            const fanFrameMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.7 });
+            const fanFrame = new THREE.Mesh(fanFrameGeo, fanFrameMat);
+            fanGroup.add(fanFrame);
+
+            // Fan Blades
+            fanBladesMesh = new THREE.Group();
+            const bladeGeo = new THREE.BoxGeometry(0.24, 0.05, 0.01);
+            const bladeMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
+            for (let i = 0; i < 4; i++) {
+                const blade = new THREE.Mesh(bladeGeo, bladeMat);
+                blade.rotation.z = (Math.PI / 2) * i;
+                blade.position.set(Math.cos((Math.PI / 2) * i) * 0.12, Math.sin((Math.PI / 2) * i) * 0.12, 0);
+                fanBladesMesh.add(blade);
+            }
+            fanGroup.add(fanBladesMesh);
+
+            fanGroup.position.set(-ROOM_DIM.width / 2 + 0.05, ROOM_DIM.height - 0.8, 0.8);
+            fanGroup.rotation.y = Math.PI / 2;
+            roomGroup.add(fanGroup);
+
+            // --- FURNITURE LAYOUT ---
+            // 1. Computer Workstations grouped along the back wall (-Z)
+            const deskSpacing = 1.6;
+            const startX = -1.6;
+            for (let i = 0; i < 3; i++) {
+                createPcDesk(startX + i * deskSpacing, 0, -ROOM_DIM.depth / 2 + 0.6, 0);
+            }
+
+            // 2. Comfortable Long Sofa along the right side wall (+X)
+            createSofa(ROOM_DIM.width / 2 - 0.65, 0, 0, -Math.PI / 2);
+
+            // Initialize People Avatars
+            updatePeopleAvatars();
+        }
+
+        function createPcDesk(x, y, z, rotY) {
+            const deskGroup = new THREE.Group();
+
+            // Desk Tabletop
+            const tableGeo = new THREE.BoxGeometry(1.2, 0.06, 0.7);
+            const tableMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.6 });
+            const table = new THREE.Mesh(tableGeo, tableMat);
+            table.position.y = 0.7;
+            table.castShadow = true;
+            table.receiveShadow = true;
+            deskGroup.add(table);
+
+            // Desk Legs
+            const legGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.7);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 });
+            const legPositions = [
+                [-0.52, 0.35, -0.28], [0.52, 0.35, -0.28],
+                [-0.52, 0.35, 0.28], [0.52, 0.35, 0.28]
+            ];
+            legPositions.forEach(pos => {
+                const leg = new THREE.Mesh(legGeo, legMat);
+                leg.position.set(...pos);
+                deskGroup.add(leg);
+            });
+
+            // Dual Monitors Setup
+            const monStandGeo = new THREE.BoxGeometry(0.3, 0.18, 0.1);
+            const monMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+            const monStand = new THREE.Mesh(monStandGeo, monMat);
+            monStand.position.set(0, 0.82, -0.2);
+            deskGroup.add(monStand);
+
+            const monScreenGeo = new THREE.BoxGeometry(0.55, 0.35, 0.02);
+            const monScreenMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.2, emissive: 0x0284c7, emissiveIntensity: 0.3 });
+            
+            const monScreenLeft = new THREE.Mesh(monScreenGeo, monScreenMat);
+            monScreenLeft.position.set(-0.28, 1.02, -0.18);
+            monScreenLeft.rotation.y = 0.15;
+            deskGroup.add(monScreenLeft);
+
+            const monScreenRight = new THREE.Mesh(monScreenGeo, monScreenMat);
+            monScreenRight.position.set(0.28, 1.02, -0.18);
+            monScreenRight.rotation.y = -0.15;
+            deskGroup.add(monScreenRight);
+
+            // PC Tower Case
+            const towerGeo = new THREE.BoxGeometry(0.22, 0.42, 0.45);
+            const towerMat = new THREE.MeshStandardMaterial({ color: 0x020617, metalness: 0.6 });
+            const tower = new THREE.Mesh(towerGeo, towerMat);
+            tower.position.set(0.42, 0.21, 0);
+            deskGroup.add(tower);
+
+            // Ergonomic Chair in front of desk
+            const chairGroup = new THREE.Group();
+            const seatGeo = new THREE.BoxGeometry(0.45, 0.06, 0.45);
+            const chairMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 });
+            const seat = new THREE.Mesh(seatGeo, chairMat);
+            seat.position.y = 0.45;
+            chairGroup.add(seat);
+
+            const backrestGeo = new THREE.BoxGeometry(0.45, 0.5, 0.05);
+            const backrest = new THREE.Mesh(backrestGeo, chairMat);
+            backrest.position.set(0, 0.72, 0.2);
+            chairGroup.add(backrest);
+
+            const chairBaseGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.45);
+            const chairBase = new THREE.Mesh(chairBaseGeo, legMat);
+            chairBase.position.y = 0.225;
+            chairGroup.add(chairBase);
+
+            chairGroup.position.set(0, 0, 0.45);
+            deskGroup.add(chairGroup);
+
+            deskGroup.position.set(x, y, z);
+            deskGroup.rotation.y = rotY;
+            roomGroup.add(deskGroup);
+            pcDesks.push(deskGroup);
+        }
+
+        function createSofa(x, y, z, rotY) {
+            const sofaGroup = new THREE.Group();
+            const sofaMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 });
+
+            // Main Base Seat Cushion
+            const baseGeo = new THREE.BoxGeometry(2.4, 0.3, 0.9);
+            const base = new THREE.Mesh(baseGeo, sofaMat);
+            base.position.y = 0.25;
+            base.castShadow = true;
+            sofaGroup.add(base);
+
+            // Backrest
+            const backGeo = new THREE.BoxGeometry(2.4, 0.65, 0.25);
+            const back = new THREE.Mesh(backGeo, sofaMat);
+            back.position.set(0, 0.6, -0.325);
+            back.castShadow = true;
+            sofaGroup.add(back);
+
+            // Armrests
+            const armGeo = new THREE.BoxGeometry(0.25, 0.45, 0.9);
+            const leftArm = new THREE.Mesh(armGeo, sofaMat);
+            leftArm.position.set(-1.15, 0.5, 0);
+            leftArm.castShadow = true;
+            sofaGroup.add(leftArm);
+
+            const rightArm = new THREE.Mesh(armGeo, sofaMat);
+            rightArm.position.set(1.15, 0.5, 0);
+            rightArm.castShadow = true;
+            sofaGroup.add(rightArm);
+
+            sofaGroup.position.set(x, y, z);
+            sofaGroup.rotation.y = rotY;
+            roomGroup.add(sofaGroup);
+        }
+
+        function updatePeopleAvatars() {
+            // Remove existing avatars
+            peopleAvatars.forEach(av => roomGroup.remove(av));
+            peopleAvatars = [];
+
+            const colors = [0xef4444, 0x3b82f6, 0x10b981, 0xf59e0b, 0x8b5cf6, 0xec4899, 0x06b6d4, 0x84cc16];
+            // Seated & standing positions near sofa & workstations
+            const presetPos = [
+                { x: -1.6, z: -1.2 }, { x: 0, z: -1.2 }, { x: 1.6, z: -1.2 },
+                { x: 1.8, z: -0.5 }, { x: 1.8, z: 0.5 }, { x: -0.5, z: 0.5 },
+                { x: 0.5, z: 0.8 }, { x: -1.5, z: 0.8 }
+            ];
+
+            for (let i = 0; i < state.peopleCount; i++) {
+                const avatarGroup = new THREE.Group();
+                
+                // Body Cylinder
+                const bodyGeo = new THREE.CylinderGeometry(0.18, 0.22, 0.9, 32);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: colors[i % colors.length], roughness: 0.5 });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.position.y = 0.45;
+                body.castShadow = true;
+                avatarGroup.add(body);
+
+                // Head Sphere
+                const headGeo = new THREE.SphereGeometry(0.18, 32, 32);
+                const headMat = new THREE.MeshStandardMaterial({ color: 0xffedd5, roughness: 0.6 });
+                const head = new THREE.Mesh(headGeo, headMat);
+                head.position.y = 1.02;
+                head.castShadow = true;
+                avatarGroup.add(head);
+
+                const pos = presetPos[i % presetPos.length];
+                avatarGroup.position.set(pos.x, 0, pos.z);
+
+                roomGroup.add(avatarGroup);
+                peopleAvatars.push(avatarGroup);
+            }
+        }
+
+        function setCameraView(mode) {
+            state.viewMode = mode;
+            const badge = document.getElementById('viewModeBadge');
+            const toggleText = document.getElementById('toggleViewText');
+            const indoorControls = document.getElementById('indoorControlsGroup');
+            const outdoorControls = document.getElementById('outdoorControlsGroup');
+
+            if (mode === 'OUTSIDE') {
+                badge.innerText = "Outside View";
+                badge.className = "text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-900/50 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider";
+                toggleText.innerText = "Go Inside";
+                
+                outdoorControls.classList.remove('hidden');
+                indoorControls.classList.add('hidden');
+
+                camera.position.set(8, 6, 9);
+                controls.target.set(0, 1.2, 0);
+                controls.autoRotate = true;
+                controls.autoRotateSpeed = 1.8;
+            } else {
+                badge.innerText = "Inside View";
+                badge.className = "text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-900/50 text-blue-300 border border-blue-500/30 uppercase tracking-wider";
+                toggleText.innerText = "Step Outside";
+
+                // In Inside View, all 4 solid walls stay 100% visible
+                Object.values(walls).forEach(w => {
+                    w.material.opacity = 1.0;
+                    w.visible = true;
+                });
+
+                outdoorControls.classList.add('hidden');
+                indoorControls.classList.remove('hidden');
+
+                camera.position.set(0.1, 1.8, 1.5);
+                controls.target.set(0, 1.2, -0.5);
+                controls.autoRotate = false;
+            }
+            controls.update();
+        }
+
+        // --- DYNAMIC WALL FADING FOR OUTSIDE VIEW ---
+        function updateWallVisibilityOutside() {
+            if (state.viewMode !== 'OUTSIDE') return;
+
+            // Get angle of camera position relative to origin in XZ plane
+            const angle = Math.atan2(camera.position.x, camera.position.z); // -PI to +PI
+            
+            // Set default wall opacity
+            Object.values(walls).forEach(w => {
+                w.visible = true;
+                w.material.opacity = 0.92;
+            });
+
+            // Dynamically fade out the wall closest to camera azimuth
+            // Front (+Z): angle around 0
+            // Right (+X): angle around PI/2
+            // Back (-Z): angle around PI or -PI
+            // Left (-X): angle around -PI/2
+            if (angle > -Math.PI / 4 && angle <= Math.PI / 4) {
+                walls.front.material.opacity = 0.1; // Front wall disappears
+            } else if (angle > Math.PI / 4 && angle <= (3 * Math.PI) / 4) {
+                walls.right.material.opacity = 0.1; // Right wall disappears
+            } else if (angle > (3 * Math.PI) / 4 || angle <= (-3 * Math.PI) / 4) {
+                walls.back.material.opacity = 0.1; // Back wall disappears
+            } else {
+                walls.left.material.opacity = 0.1; // Left wall disappears
+            }
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // --- PHYSICS & TELEMETRY ENGINE ---
+        function updatePhysics(dt) {
+            if (!state.isRunning) return;
+
+            // dt in simulation time seconds
+            const simDt = dt * state.simSpeed;
+            state.elapsedSeconds += simDt;
+
+            // 1. CO2 Calculation (ppm)
+            const co2GenRate = state.peopleCount * 0.015;
+            const fanVentilationRate = (state.fanRpm / 2000) * 0.08 + (state.infiltrationACH * 0.005);
+            const co2Target = 400.0;
+            state.co2 += (co2GenRate - (state.co2 - co2Target) * fanVentilationRate) * (simDt / 10);
+            state.co2 = Math.max(400, Math.min(2500, state.co2));
+
+            // 2. O2 Calculation (%)
+            const o2Target = 20.95 - (state.co2 - 400) * 0.0006;
+            state.o2 += (o2Target - state.o2) * 0.05 * (simDt / 5);
+            state.o2 = Math.max(18.0, Math.min(20.95, state.o2));
+
+            // 3. Heat & Temperature Calculation (°C)
+            const peopleHeat = state.peopleCount * 100;
+            const pcHeat = (state.pcPower * (state.cpuUsage / 100)) * Math.min(state.peopleCount, 3);
+            const ledHeat = state.ledWattage * 2;
+            const totalHeatWatts = peopleHeat + pcHeat + ledHeat;
+
+            if (state.temp > state.acSetpoint + 0.2) {
+                state.acState = true;
+            } else if (state.temp < state.acSetpoint - 0.2) {
+                state.acState = false;
+            }
+
+            const coolingPower = state.acState ? state.acCapacity : 0;
+            const netHeatRate = (totalHeatWatts - coolingPower) * 0.00008;
+
+            const wallHeatTransfer = (state.extTemp - state.temp) * (state.wallPermeability * 0.01);
+
+            state.temp += (netHeatRate + wallHeatTransfer) * (simDt / 20);
+            state.temp = Math.max(15, Math.min(45, state.temp));
+
+            // Fan Auto Mode adjustments
+            if (state.fanAutoMode) {
+                if (state.co2 > 1000) {
+                    state.fanRpm = Math.min(2000, state.fanRpm + 10);
+                } else if (state.co2 < 600 && state.fanRpm > 100) {
+                    state.fanRpm = Math.max(0, state.fanRpm - 10);
+                }
+                document.getElementById('sliderFanRpm').value = Math.round(state.fanRpm);
+                document.getElementById('valFanRpm').innerText = `${Math.round(state.fanRpm)} RPM`;
+            }
+
+            // 4. Humidity Calculation (%)
+            const humGen = state.peopleCount * 0.02;
+            const acDehum = state.acState ? 0.08 : 0;
+            const extHumDiff = (state.extHumidity - state.humidity) * 0.01;
+            state.humidity += (humGen - acDehum + extHumDiff) * (simDt / 10);
+            state.humidity = Math.max(0, Math.min(100, state.humidity));
+
+            // 5. Luminosity Calculation (Lux)
+            const ledLux = state.ledWattage * 18.0;
+            const sunLux = state.sunIntensity * (1 - state.sunroofTint / 100) * 4.5;
+            state.lux = Math.round(ledLux + sunLux);
+
+            // Append to Chart History Buffers
+            historyData.temp.push(state.temp);
+            historyData.temp.shift();
+            historyData.humidity.push(state.humidity);
+            historyData.humidity.shift();
+            historyData.co2.push(state.co2);
+            historyData.co2.shift();
+            historyData.o2.push(state.o2);
+            historyData.o2.shift();
+            historyData.lux.push(state.lux);
+            historyData.lux.shift();
+
+            // Update 3D visual reactions
+            update3DVisuals();
+            
+            // Update UI telemetry text and charts
+            updateUI();
+        }
+
+        function update3DVisuals() {
+            // Fan Rotation
+            if (fanBladesMesh && state.fanRpm > 0) {
+                fanBladesMesh.rotation.z += (state.fanRpm / 60) * 0.05;
+            }
+
+            // LED Lights intensity
+            const intensity = state.ledWattage / 40;
+            if (ledLight1 && ledLight2) {
+                ledLight1.intensity = intensity;
+                ledLight2.intensity = intensity;
+                ledMesh1.material.color.setScalar(intensity > 0.05 ? 1 : 0.2);
+                ledMesh2.material.color.setScalar(intensity > 0.05 ? 1 : 0.2);
+            }
+
+            // AC status LED color
+            if (acLedMesh) {
+                acLedMesh.material.color.setHex(state.acState ? 0x10b981 : 0xef4444);
+            }
+        }
+
+        // --- SPARKLINE CANVAS DRAWING ---
+        function drawSparkline(canvasId, data, color) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width = canvas.clientWidth;
+            const h = canvas.height = canvas.clientHeight;
+
+            ctx.clearRect(0, 0, w, h);
+
+            let min = Math.min(...data);
+            let max = Math.max(...data);
+            if (min === max) { min -= 1; max += 1; }
+
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.lineJoin = 'round';
+
+            const step = w / (data.length - 1);
+            data.forEach((val, i) => {
+                const x = i * step;
+                const y = h - ((val - min) / (max - min)) * (h - 6) - 3;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Fill area gradient
+            ctx.lineTo(w, h);
+            ctx.lineTo(0, h);
+            ctx.closePath();
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, color + '44');
+            grad.addColorStop(1, color + '00');
+            ctx.fillStyle = grad;
+            ctx.fill();
+        }
+
+        function formatTime(totalSecs) {
+            const h = Math.floor(totalSecs / 3600);
+            const m = Math.floor((totalSecs % 3600) / 60);
+            const s = Math.floor(totalSecs % 60);
+            return `t = ${h}h ${m < 10 ? '0' + m : m}m ${s < 10 ? '0' + s : s}s`;
+        }
+
+        function updateUI() {
+            // Numeric Display Tiles
+            document.getElementById('metricTemp').innerText = `${state.temp.toFixed(1)}°C`;
+            document.getElementById('metricHumidity').innerText = `${Math.round(state.humidity)}%`;
+            document.getElementById('metricCo2').innerText = `${Math.round(state.co2)} ppm`;
+            document.getElementById('metricO2').innerText = `${state.o2.toFixed(1)}%`;
+            document.getElementById('metricLuminosity').innerText = `${Math.round(state.lux)} lux`;
+
+            // Status Badges
+            document.getElementById('simTimeDisplay').innerText = formatTime(state.elapsedSeconds);
+            
+            const acBadge = document.getElementById('acStatusBadge');
+            acBadge.innerText = state.acState ? "AC: ON" : "AC: OFF";
+            acBadge.className = state.acState ? 
+                "px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500/40" : 
+                "px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-500/40";
+
+            const fanBadge = document.getElementById('fanStatusBadge');
+            fanBadge.innerText = state.fanRpm > 0 ? `FAN: ${Math.round(state.fanRpm)} RPM` : "FAN: OFF";
+
+            // Sparkline Numerical Titles
+            document.getElementById('sparkValTemp').innerText = `${state.temp.toFixed(1)}°C`;
+            document.getElementById('sparkValHumidity').innerText = `${state.humidity.toFixed(1)}%`;
+            document.getElementById('sparkValCo2').innerText = `${state.co2.toFixed(1)} ppm`;
+            document.getElementById('sparkValO2').innerText = `${state.o2.toFixed(1)}%`;
+            document.getElementById('sparkValLux').innerText = `${state.lux.toFixed(1)} lux`;
+
+            // Render Charts
+            drawSparkline('chartTemp', historyData.temp, '#f43f5e');
+            drawSparkline('chartHumidity', historyData.humidity, '#14b8a6');
+            drawSparkline('chartCo2', historyData.co2, '#f59e0b');
+            drawSparkline('chartO2', historyData.o2, '#38bdf8');
+            drawSparkline('chartLux', historyData.lux, '#fde047');
+        }
+
+        // --- BIND EVENT LISTENERS ---
+        function setupEventListeners() {
+            // View Mode Toggle
+            document.getElementById('toggleViewBtn').addEventListener('click', () => {
+                setCameraView(state.viewMode === 'INSIDE' ? 'OUTSIDE' : 'INSIDE');
+            });
+
+            // Reset Button
+            document.getElementById('resetSimBtn').addEventListener('click', () => {
+                state.temp = 29.3;
+                state.humidity = 12.0;
+                state.co2 = 896.0;
+                state.o2 = 20.9;
+                state.elapsedSeconds = 0;
+                state.peopleCount = 2;
+                state.fanRpm = 287;
+                document.getElementById('sliderPeople').value = 2;
+                document.getElementById('valPeople').innerText = '2';
+                document.getElementById('sliderFanRpm').value = 287;
+                document.getElementById('valFanRpm').innerText = '287 RPM';
+                updatePeopleAvatars();
+            });
+
+            // Run / Stop Simulation Button
+            const runBtn = document.getElementById('toggleSimRunBtn');
+            runBtn.addEventListener('click', () => {
+                state.isRunning = !state.isRunning;
+                if (state.isRunning) {
+                    runBtn.className = "w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 toggle-btn-active transition-all transform active:scale-95 flex items-center justify-center gap-2";
+                    document.getElementById('simRunIcon').className = "fa-solid fa-pause";
+                    document.getElementById('simRunText').innerText = "Stop Simulation";
+                } else {
+                    runBtn.className = "w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 toggle-btn-inactive transition-all transform active:scale-95 flex items-center justify-center gap-2";
+                    document.getElementById('simRunIcon').className = "fa-solid fa-play";
+                    document.getElementById('simRunText').innerText = "Run Simulation";
+                }
+            });
+
+            // Outdoor Sliders
+            bindSlider('sliderExtTemp', 'valExtTemp', '°C', v => state.extTemp = v);
+            bindSlider('sliderExtHumidity', 'valExtHumidity', '%', v => state.extHumidity = v);
+            bindSlider('sliderWallPerm', 'valWallPerm', ' W/m²K', v => state.wallPermeability = v);
+            bindSlider('sliderSunIntensity', 'valSunIntensity', ' W/m²', v => state.sunIntensity = v);
+            bindSlider('sliderInfiltration', 'valInfiltration', ' ACH', v => state.infiltrationACH = v);
+
+            // Indoor Sliders
+            bindSlider('sliderAcSetpoint', 'valAcSetpoint', ' °C', v => state.acSetpoint = v);
+            bindSlider('sliderAcCapacity', 'valAcCapacity', ' W', v => state.acCapacity = v);
+            bindSlider('sliderSunroofTint', 'valSunroofTint', ' %', v => state.sunroofTint = v);
+            bindSlider('sliderLedWattage', 'valLedWattage', ' W', v => state.ledWattage = v);
+            bindSlider('sliderPcPower', 'valPcPower', ' W', v => state.pcPower = v);
+            bindSlider('sliderCpuUsage', 'valCpuUsage', ' %', v => state.cpuUsage = v);
+            bindSlider('sliderFanRpm', 'valFanRpm', ' RPM', v => {
+                state.fanRpm = v;
+                state.fanAutoMode = false;
+                updateFanAutoBtn();
+            });
+
+            // Fan Auto Mode Toggle
+            const fanAutoBtn = document.getElementById('toggleFanAutoBtn');
+            fanAutoBtn.addEventListener('click', () => {
+                state.fanAutoMode = !state.fanAutoMode;
+                updateFanAutoBtn();
+            });
+
+            // Occupancy Slider
+            bindSlider('sliderPeople', 'valPeople', '', v => {
+                state.peopleCount = parseInt(v);
+                updatePeopleAvatars();
+            });
+
+            // Simulation Speed
+            bindSlider('sliderSimSpeed', 'valSimSpeed', ' ×', v => state.simSpeed = v);
+        }
+
+        function updateFanAutoBtn() {
+            const btn = document.getElementById('toggleFanAutoBtn');
+            const txt = document.getElementById('fanAutoText');
+            if (state.fanAutoMode) {
+                btn.className = "w-full py-1.5 px-3 rounded-lg text-xs font-medium border border-emerald-500/40 text-emerald-300 bg-emerald-950/40 hover:bg-emerald-900/50 transition flex items-center justify-center gap-2";
+                txt.innerText = "Fan Auto Mode: ON";
+            } else {
+                btn.className = "w-full py-1.5 px-3 rounded-lg text-xs font-medium border border-slate-600 text-slate-400 bg-slate-800/40 hover:bg-slate-800 transition flex items-center justify-center gap-2";
+                txt.innerText = "Fan Auto Mode: OFF";
+            }
+        }
+
+        function bindSlider(sliderId, labelId, unit, callback) {
+            const slider = document.getElementById(sliderId);
+            const label = document.getElementById(labelId);
+            slider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                label.innerText = `${val}${unit}`;
+                callback(val);
+            });
+        }
+
+        // --- MAIN ANIMATION LOOP ---
+        let lastTime = performance.now();
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const now = performance.now();
+            const dt = (now - lastTime) / 1000;
+            lastTime = now;
+
+            // Physics tick update
+            updatePhysics(dt);
+
+            // Dynamically check wall transparency in Outside View
+            updateWallVisibilityOutside();
+
+            // Orbit controls & render
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Initialize application on window load
+        window.onload = () => {
+            init3D();
+            setupEventListeners();
+            animate();
+        };
+    </script>
+</body>
+</html>
