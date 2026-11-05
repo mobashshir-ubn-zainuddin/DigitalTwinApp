@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "build:win": "electron-builder --win --x64",
+    "build:win": "electron-builder --win --x64 --publish never",
     "build:all": "electron-builder -mwl"
   },
   "build": {
