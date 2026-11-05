@@ -1,28 +1,26 @@
-name: Build & Release Windows EXE
-
-# Triggers:
-#   - Push a tag like v1.0.0  -> builds + creates a GitHub Release with EXEs attached
-#   - workflow_dispatch       -> builds manually from the GitHub Actions UI
+name: Build and Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  build-windows:
-    name: Build Windows EXE
+  build:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
 
       - name: Install dependencies
         run: npm install
@@ -32,22 +30,15 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: List dist output
-        run: Get-ChildItem dist -Recurse | Select-Object FullName, Length
+      - name: List build output
+        run: Get-ChildItem dist -Recurse | Select-Object Name, Length
         shell: pwsh
 
-      - name: Upload installer EXE
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: RoomDigitalTwin-Installer-Windows-x64
-          path: dist/*Setup*.exe
-          if-no-files-found: warn
-
-      - name: Upload portable EXE
-        uses: actions/upload-artifact@v4
-        with:
-          name: RoomDigitalTwin-Portable-Windows-x64
-          path: dist/*Portable*.exe
+          name: windows-executables
+          path: dist/*.exe
           if-no-files-found: warn
 
       - name: Create GitHub Release
@@ -55,32 +46,27 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           name: Room Digital Twin ${{ github.ref_name }}
-          tag_name: ${{ github.ref_name }}
+          files: dist/*.exe
           body: |
             ## Room Digital Twin ${{ github.ref_name }}
 
-            ### Download
+            ### Download Options
 
-            | File | Description |
-            |------|-------------|
-            | `*-Setup-*.exe` | **Installer** - installs to Program Files, adds desktop shortcut |
-            | `*-Portable.exe` | **Portable** - run directly, no installation needed |
+            | File | Use |
+            |------|-----|
+            | `*Setup*.exe` | Installer - adds desktop shortcut, uninstaller included |
+            | `*Portable*.exe` | No install needed - download and run directly |
 
-            ### First Run (Windows SmartScreen)
-            Because the EXE is unsigned, Windows may show "Windows protected your PC".
-            Click **More info -> Run anyway** to proceed.
+            ### Windows SmartScreen Notice
+            Windows may show "Windows protected your PC" on first launch because the EXE is unsigned.
+            Click **More info** then **Run anyway** to proceed.
 
-            ### Features
-            - Interactive 3D room simulation (Three.js)
-            - Indoor / Outdoor camera views with auto-rotating outside orbit
+            ### What's included
+            - 3D room simulation with Three.js (computers, AC, fan, people)
+            - Indoor first-person view + outdoor orbit view
             - Real-time physics: temperature, humidity, CO2, O2, luminosity
-            - Live-editable parameters while simulation runs (AC, fan, occupancy, lighting, PCs)
-            - Sparkline telemetry charts
-            - Fan auto-mode (CO2-driven RPM adjustment)
-          files: |
-            dist/*Setup*.exe
-            dist/*Portable*.exe
-          draft: false
-          prerelease: false
+            - All parameters editable while simulation is running
+            - 5 live sparkline telemetry charts
+            - Fan auto-mode and AC hysteresis control
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
