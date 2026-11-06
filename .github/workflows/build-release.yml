@@ -34,11 +34,18 @@ jobs:
         run: Get-ChildItem dist -Recurse | Select-Object Name, Length
         shell: pwsh
 
-      - name: Upload artifacts
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-executables
-          path: dist/*.exe
+          name: Room-Digital-Twin-Setup-x64
+          path: dist/Room-Digital-Twin-Setup-x64.exe
+          if-no-files-found: warn
+
+      - name: Upload portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Room-Digital-Twin-Portable
+          path: dist/Room-Digital-Twin-Portable.exe
           if-no-files-found: warn
 
       - name: Create GitHub Release
@@ -46,27 +53,31 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           name: Room Digital Twin ${{ github.ref_name }}
-          files: dist/*.exe
+          files: |
+            dist/Room-Digital-Twin-Setup-x64.exe
+            dist/Room-Digital-Twin-Portable.exe
           body: |
             ## Room Digital Twin ${{ github.ref_name }}
 
-            ### Download Options
+            ### Download
 
-            | File | Use |
-            |------|-----|
-            | `*Setup*.exe` | Installer - adds desktop shortcut, uninstaller included |
-            | `*Portable*.exe` | No install needed - download and run directly |
+            | File | Description | Link |
+            |------|-------------|------|
+            | Installer (recommended) | Installs to Program Files, adds desktop & Start Menu shortcut, includes uninstaller | [Room-Digital-Twin-Setup-x64.exe](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/Room-Digital-Twin-Setup-x64.exe) |
+            | Portable | No installation - download and double-click to run | [Room-Digital-Twin-Portable.exe](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/Room-Digital-Twin-Portable.exe) |
 
             ### Windows SmartScreen Notice
             Windows may show "Windows protected your PC" on first launch because the EXE is unsigned.
-            Click **More info** then **Run anyway** to proceed.
+            Click **More info** then **Run anyway** to proceed. This is normal for open-source apps without a paid code-signing certificate.
 
-            ### What's included
-            - 3D room simulation with Three.js (computers, AC, fan, people)
-            - Indoor first-person view + outdoor orbit view
-            - Real-time physics: temperature, humidity, CO2, O2, luminosity
-            - All parameters editable while simulation is running
-            - 5 live sparkline telemetry charts
-            - Fan auto-mode and AC hysteresis control
+            ### What's in this release
+            - 3D room simulation (Three.js) with workstations, AC unit, exhaust fan, ceiling LEDs, occupant avatars
+            - Indoor first-person view + outdoor auto-rotating orbit view
+            - Real-time physics engine: temperature, humidity, CO2, O2, luminosity
+            - All parameters editable live while simulation runs (no restart needed)
+            - 5 sparkline telemetry charts with rolling history
+            - Fan auto-mode: RPM adjusts automatically based on CO2 level
+            - AC hysteresis control with on/off status indicator
+            - Simulation speed: 1x to 1000x time acceleration
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

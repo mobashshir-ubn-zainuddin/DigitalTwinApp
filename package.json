@@ -33,17 +33,17 @@
           "arch": ["x64"]
         }
       ],
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Room Digital Twin"
+      "shortcutName": "Room Digital Twin",
+      "artifactName": "Room-Digital-Twin-Setup-x64.${ext}"
     },
     "portable": {
-      "artifactName": "${productName}-${version}-Portable.${ext}"
+      "artifactName": "Room-Digital-Twin-Portable.${ext}"
     }
   },
   "devDependencies": {
