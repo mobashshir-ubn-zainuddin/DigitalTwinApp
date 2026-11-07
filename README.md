@@ -61,7 +61,6 @@ Browse every release, changelogs, and older EXEs: **[Releases page](https://gith
 | Key | Action |
 |-----|--------|
 | F11 | Toggle full screen |
-| F12 | Open DevTools |
 | Ctrl+R | Reload simulation |
 | Ctrl+= / Ctrl+- | Zoom in / out |
 | Ctrl+0 | Reset zoom |

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, shell } = require('electron');
+const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 
 function createWindow() {
@@ -34,11 +34,6 @@ function createWindow() {
           label: 'Reload Simulation',
           accelerator: 'CmdOrCtrl+R',
           click: () => win.reload(),
-        },
-        {
-          label: 'Toggle DevTools',
-          accelerator: 'F12',
-          click: () => win.webContents.toggleDevTools(),
         },
         { type: 'separator' },
         {
