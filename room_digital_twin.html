@@ -182,6 +182,44 @@
 
             <!-- Indoor / Room Simulation Controls (Shown in INSIDE VIEW) -->
             <div id="indoorControlsGroup" class="space-y-3.5">
+
+                <!-- Initial Conditions -->
+                <div class="space-y-2 pb-2 border-b border-slate-700/60">
+                    <div class="text-xs font-bold text-green-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-seedling"></i> Initial Conditions
+                    </div>
+                    <p class="text-[10px] text-slate-500 leading-tight">Applied when simulation starts or resets</p>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-medium text-slate-300">
+                            <span>Temperature</span>
+                            <span id="valInitTemp" class="text-green-400 font-semibold">29.3 °C</span>
+                        </div>
+                        <input type="range" id="sliderInitTemp" min="10" max="45" step="0.1" value="29.3">
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-medium text-slate-300">
+                            <span>Humidity</span>
+                            <span id="valInitHumidity" class="text-green-400 font-semibold">12 %</span>
+                        </div>
+                        <input type="range" id="sliderInitHumidity" min="0" max="100" step="1" value="12">
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-medium text-slate-300">
+                            <span>CO₂</span>
+                            <span id="valInitCo2" class="text-green-400 font-semibold">896 ppm</span>
+                        </div>
+                        <input type="range" id="sliderInitCo2" min="400" max="2500" step="10" value="896">
+                    </div>
+
+                    <div class="flex justify-between text-xs text-slate-400 pt-0.5">
+                        <span>O₂ (from CO₂)</span>
+                        <span id="valInitO2" class="text-green-400 font-semibold">20.65 %</span>
+                    </div>
+                </div>
+
                 <div class="text-xs font-bold text-blue-400 uppercase tracking-wider border-b border-slate-700/60 pb-1.5 flex items-center gap-2">
                     <i class="fa-solid fa-sliders text-blue-400"></i> Room Controls
                 </div>
@@ -281,18 +319,64 @@
             <div class="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
                 <i class="fa-solid fa-cube"></i> Place Objects
             </div>
+
+            <!-- Coordinate inputs (room corner 0,0 = front-left) -->
+            <div class="bg-slate-900/60 rounded-xl p-2 space-y-1.5 border border-slate-700/40">
+                <div class="text-[10px] text-slate-500 uppercase font-semibold">Position (m) — corner origin (0,0)</div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[10px] text-slate-400"><span>X (0–6)</span><span id="valPlaceX" class="text-purple-300 font-semibold">3.0</span></div>
+                        <input type="range" id="sliderPlaceX" min="0" max="6" step="0.1" value="3.0">
+                    </div>
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[10px] text-slate-400"><span>Z (0–5)</span><span id="valPlaceZ" class="text-purple-300 font-semibold">2.5</span></div>
+                        <input type="range" id="sliderPlaceZ" min="0" max="5" step="0.1" value="2.5">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Box size inputs -->
+            <div class="bg-slate-900/60 rounded-xl p-2 space-y-1.5 border border-slate-700/40">
+                <div class="text-[10px] text-slate-500 uppercase font-semibold">Box Size (m)</div>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[10px] text-slate-400"><span>W</span><span id="valBoxW" class="text-purple-300 font-semibold">0.5</span></div>
+                        <input type="range" id="sliderBoxW" min="0.2" max="2.0" step="0.1" value="0.5">
+                    </div>
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[10px] text-slate-400"><span>H</span><span id="valBoxH" class="text-purple-300 font-semibold">0.75</span></div>
+                        <input type="range" id="sliderBoxH" min="0.2" max="2.0" step="0.05" value="0.75">
+                    </div>
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[10px] text-slate-400"><span>D</span><span id="valBoxD" class="text-purple-300 font-semibold">0.5</span></div>
+                        <input type="range" id="sliderBoxD" min="0.2" max="2.0" step="0.1" value="0.5">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
             <div class="grid grid-cols-2 gap-1.5">
-                <button id="placeModePersonBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-purple-600/40 text-purple-300 bg-purple-950/40 hover:bg-purple-900/50 transition flex items-center justify-center gap-1.5">
+                <button id="addPersonBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-purple-600/40 text-purple-300 bg-purple-950/40 hover:bg-purple-900/50 transition flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-person"></i> Add Person
                 </button>
                 <button id="removeModePersonBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-slate-600/60 text-slate-300 bg-slate-800/60 hover:bg-slate-700 transition flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-person-walking-arrow-right"></i> Remove
                 </button>
-                <button id="placeModeBoxBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-purple-600/40 text-purple-300 bg-purple-950/40 hover:bg-purple-900/50 transition flex items-center justify-center gap-1.5">
+                <button id="addBoxBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-purple-600/40 text-purple-300 bg-purple-950/40 hover:bg-purple-900/50 transition flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-box"></i> Add Box
                 </button>
                 <button id="removeBoxBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-slate-600/60 text-slate-300 bg-slate-800/60 hover:bg-slate-700 transition flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-trash-can"></i> Remove Box
+                </button>
+            </div>
+
+            <!-- Click-to-place toggle -->
+            <div class="grid grid-cols-2 gap-1.5">
+                <button id="placeModePersonBtn" class="py-1 px-2 rounded-lg text-[10px] font-medium border border-indigo-600/30 text-indigo-300 bg-indigo-950/30 hover:bg-indigo-900/40 transition flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-crosshairs"></i> Click-Place Person
+                </button>
+                <button id="placeModeBoxBtn" class="py-1 px-2 rounded-lg text-[10px] font-medium border border-indigo-600/30 text-indigo-300 bg-indigo-950/30 hover:bg-indigo-900/40 transition flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-crosshairs"></i> Click-Place Box
                 </button>
             </div>
             <div id="placeModeStatus" class="hidden text-center text-xs py-1.5 px-2 rounded-lg bg-yellow-900/40 text-yellow-300 border border-yellow-500/30 animate-pulse">
@@ -302,7 +386,7 @@
 
         <!-- Run / Stop Simulation Button -->
         <div class="pt-3 border-t border-slate-700/60 mt-3">
-            <button id="toggleSimRunBtn" class="w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 toggle-btn-active transition-all transform active:scale-95 flex items-center justify-center gap-2">
+            <button id="toggleSimRunBtn" class="w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 toggle-btn-inactive transition-all transform active:scale-95 flex items-center justify-center gap-2">
                 <i class="fa-solid fa-play" id="simRunIcon"></i> <span id="simRunText">Run Simulation</span>
             </button>
         </div>
@@ -338,15 +422,18 @@
                 </div>
 
                 <!-- Simulation Real-Time Clock & Indicators -->
-                <div class="flex items-center gap-3 font-mono text-xs text-slate-400">
+                <div class="flex items-center gap-2 font-mono text-xs text-slate-400">
                     <span id="simTimeDisplay">t = 0h 00m 00s</span>
                     <span id="acStatusBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500/40">AC: ON</span>
                     <span id="fanStatusBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-500/40">FAN: 287 RPM</span>
+                    <button id="toggleTelemetryBtn" class="ml-1 px-2 py-0.5 rounded-lg bg-slate-700/60 hover:bg-slate-600 text-slate-300 hover:text-white transition text-[10px] flex items-center gap-1 border border-slate-600/40" title="Collapse/expand charts">
+                        <i class="fa-solid fa-chevron-down" id="telemetryChevron"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Sparkline Mini Charts Grid -->
-            <div class="grid grid-cols-5 gap-3 pt-0.5">
+            <!-- Sparkline Mini Charts Grid (collapsible) -->
+            <div class="grid grid-cols-5 gap-3 pt-0.5" id="telemetryCharts">
                 <!-- Temp Sparkline -->
                 <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800/80 flex flex-col justify-between">
                     <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400 mb-1">
@@ -400,41 +487,46 @@
     <script>
         // --- SIMULATION PARAMETERS STATE ---
         const state = {
-            viewMode: 'INSIDE', // 'INSIDE' | 'OUTSIDE'
-            isRunning: true,
+            viewMode: 'INSIDE',
+            isRunning: false,
             elapsedSeconds: 0,
-            
+
+            // User-configurable initial conditions
+            initTemp: 29.3,
+            initHumidity: 12.0,
+            initCo2: 896.0,
+
             // Outdoor Parameters
-            extTemp: 35.0,        // °C
-            extHumidity: 40,      // %
-            wallPermeability: 1.5,// W/m²K
-            sunIntensity: 170,    // W/m²
-            infiltrationACH: 0.5, // Air Changes per hour
-            
+            extTemp: 35.0,
+            extHumidity: 40,
+            wallPermeability: 1.5,
+            sunIntensity: 170,
+            infiltrationACH: 0.5,
+
             // Room Controls
-            acSetpoint: 24.0,     // °C
-            acCapacity: 3500,     // Watts
+            acSetpoint: 24.0,
+            acCapacity: 3500,
             acState: true,
-            sunroofTint: 50,      // %
-            
+            sunroofTint: 50,
+
             // Equipment & Occupancy
-            ledWattage: 40,       // W each (2 LEDs)
-            pcPower: 300,         // W each
-            cpuUsage: 41,         // %
-            
+            ledWattage: 40,
+            pcPower: 300,
+            cpuUsage: 41,
+
             fanRpm: 287,
             fanAutoMode: true,
-            
+
             peopleCount: 2,
             simSpeed: 108,
-            
-            // Dynamic Environmental Telemetry State
+
+            // Dynamic Environmental Telemetry (starts at initial conditions)
             temp: 29.3,
             humidity: 12.0,
             co2: 896.0,
-            o2: 20.90,
+            o2: 20.65,
             lux: 810.0,
-            placeMode: null  // null | 'person' | 'box'
+            placeMode: null
         };
 
         // Export history for Excel download (1 record per real second)
@@ -449,15 +541,62 @@
         const mouse = new THREE.Vector2();
         let mouseDownPos = { x: 0, y: 0 };
 
+        // Panel placement coords (user space) + box size
+        state.placeX = 3.0;
+        state.placeZ = 2.5;
+        state.boxW = 0.5;
+        state.boxH = 0.75;
+        state.boxD = 0.5;
+
+        let telemetryExpanded = true;
+
+        function toggleTelemetry() {
+            telemetryExpanded = !telemetryExpanded;
+            const charts = document.getElementById('telemetryCharts');
+            const chevron = document.getElementById('telemetryChevron');
+            const sidebar = document.getElementById('controlsSidebar');
+            if (telemetryExpanded) {
+                charts.classList.remove('hidden');
+                chevron.className = 'fa-solid fa-chevron-down';
+                sidebar.style.bottom = '96px';
+            } else {
+                charts.classList.add('hidden');
+                chevron.className = 'fa-solid fa-chevron-up';
+                sidebar.style.bottom = '56px';
+            }
+        }
+
+        function placePersonAtRoomCoords(tx, tz) {
+            customPeoplePositions[state.peopleCount] = { x: tx, z: tz };
+            state.peopleCount = Math.min(8, state.peopleCount + 1);
+            document.getElementById('sliderPeople').value = state.peopleCount;
+            document.getElementById('valPeople').innerText = state.peopleCount;
+            updatePeopleAvatars();
+        }
+
         // Telemetry History Buffers for Charts
         const MAX_HIST = 40;
         const historyData = {
-            temp: Array(MAX_HIST).fill(29.3),
-            humidity: Array(MAX_HIST).fill(12.0),
-            co2: Array(MAX_HIST).fill(896.0),
-            o2: Array(MAX_HIST).fill(20.90),
-            lux: Array(MAX_HIST).fill(810.0)
+            temp: Array(MAX_HIST).fill(state.temp),
+            humidity: Array(MAX_HIST).fill(state.humidity),
+            co2: Array(MAX_HIST).fill(state.co2),
+            o2: Array(MAX_HIST).fill(state.o2),
+            lux: Array(MAX_HIST).fill(state.lux)
         };
+
+        // Helper: re-seed history when initial conditions change
+        function resetHistoryData() {
+            historyData.temp.fill(state.temp);
+            historyData.humidity.fill(state.humidity);
+            historyData.co2.fill(state.co2);
+            historyData.o2.fill(state.o2);
+            historyData.lux.fill(state.lux);
+        }
+
+        // Helper: compute O2 from CO2 (consistent formula)
+        function co2ToO2(co2) {
+            return Math.max(18.0, Math.min(20.95, 20.95 - (co2 - 400) * 0.0006));
+        }
 
         // --- THREE.JS SCENE SETUP ---
         let scene, camera, renderer, controls;
@@ -1158,11 +1297,17 @@
             document.getElementById('placeModeStatus').classList.add('hidden');
         }
 
-        function addPlacedBox(x, z) {
-            const geo = new THREE.BoxGeometry(0.5, 0.75, 0.5);
+        // Convert user panel coords (ux 0-6, uz 0-5) to Three.js (tx, tz)
+        function userToRoom(ux, uz) {
+            return { x: ux - 3, z: 2.5 - uz };
+        }
+
+        function addPlacedBox(x, z, w, h, d) {
+            w = w || 0.5; h = h || 0.75; d = d || 0.5;
+            const geo = new THREE.BoxGeometry(w, h, d);
             const mat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.6, metalness: 0.2 });
             const box = new THREE.Mesh(geo, mat);
-            box.position.set(x, 0.375, z);
+            box.position.set(x, h / 2, z);
             box.castShadow = true;
             box.receiveShadow = true;
             roomGroup.add(box);
@@ -1193,13 +1338,9 @@
             const z = Math.max(-halfD, Math.min(halfD, pt.z));
 
             if (state.placeMode === 'person') {
-                customPeoplePositions[state.peopleCount] = { x, z };
-                state.peopleCount = Math.min(8, state.peopleCount + 1);
-                document.getElementById('sliderPeople').value = state.peopleCount;
-                document.getElementById('valPeople').innerText = state.peopleCount;
-                updatePeopleAvatars();
+                placePersonAtRoomCoords(x, z);
             } else if (state.placeMode === 'box') {
-                addPlacedBox(x, z);
+                addPlacedBox(x, z, state.boxW, state.boxH, state.boxD);
             }
             exitPlaceMode();
         }
@@ -1213,11 +1354,12 @@
 
             // Reset Button
             document.getElementById('resetSimBtn').addEventListener('click', () => {
-                state.temp = 29.3;
-                state.humidity = 12.0;
-                state.co2 = 896.0;
-                state.o2 = 20.9;
+                state.temp = state.initTemp;
+                state.humidity = state.initHumidity;
+                state.co2 = state.initCo2;
+                state.o2 = co2ToO2(state.initCo2);
                 state.elapsedSeconds = 0;
+                state.isRunning = false;
                 state.peopleCount = 2;
                 state.fanRpm = 287;
                 customPeoplePositions = [];
@@ -1226,23 +1368,31 @@
                 exportHistory.length = 0;
                 lastExportRealTime = 0;
                 exitPlaceMode();
+                resetHistoryData();
+                // Reset run button to stopped state
+                const rb = document.getElementById('toggleSimRunBtn');
+                rb.className = rb.className.replace('toggle-btn-active', 'toggle-btn-inactive');
+                document.getElementById('simRunIcon').className = 'fa-solid fa-play';
+                document.getElementById('simRunText').innerText = 'Run Simulation';
                 document.getElementById('sliderPeople').value = 2;
                 document.getElementById('valPeople').innerText = '2';
                 document.getElementById('sliderFanRpm').value = 287;
                 document.getElementById('valFanRpm').innerText = '287 RPM';
                 updatePeopleAvatars();
+                updateUI();
             });
 
             // Run / Stop Simulation Button
             const runBtn = document.getElementById('toggleSimRunBtn');
+            const BASE_BTN = "w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 transition-all transform active:scale-95 flex items-center justify-center gap-2";
             runBtn.addEventListener('click', () => {
                 state.isRunning = !state.isRunning;
                 if (state.isRunning) {
-                    runBtn.className = "w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 toggle-btn-active transition-all transform active:scale-95 flex items-center justify-center gap-2";
-                    document.getElementById('simRunIcon').className = "fa-solid fa-pause";
+                    runBtn.className = BASE_BTN + " toggle-btn-active";
+                    document.getElementById('simRunIcon').className = "fa-solid fa-stop";
                     document.getElementById('simRunText').innerText = "Stop Simulation";
                 } else {
-                    runBtn.className = "w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 toggle-btn-inactive transition-all transform active:scale-95 flex items-center justify-center gap-2";
+                    runBtn.className = BASE_BTN + " toggle-btn-inactive";
                     document.getElementById('simRunIcon').className = "fa-solid fa-play";
                     document.getElementById('simRunText').innerText = "Run Simulation";
                 }
@@ -1292,9 +1442,81 @@
             // Download Excel
             document.getElementById('downloadExcelBtn').addEventListener('click', downloadExcel);
 
-            // Place Objects buttons
+            // Footer telemetry collapse
+            document.getElementById('toggleTelemetryBtn').addEventListener('click', toggleTelemetry);
+
+            // Initial conditions sliders
+            document.getElementById('sliderInitTemp').addEventListener('input', e => {
+                state.initTemp = parseFloat(e.target.value);
+                document.getElementById('valInitTemp').innerText = state.initTemp.toFixed(1) + ' °C';
+                if (!state.isRunning) {
+                    state.temp = state.initTemp;
+                    resetHistoryData();
+                    updateUI();
+                }
+            });
+            document.getElementById('sliderInitHumidity').addEventListener('input', e => {
+                state.initHumidity = parseFloat(e.target.value);
+                document.getElementById('valInitHumidity').innerText = Math.round(state.initHumidity) + ' %';
+                if (!state.isRunning) {
+                    state.humidity = state.initHumidity;
+                    resetHistoryData();
+                    updateUI();
+                }
+            });
+            document.getElementById('sliderInitCo2').addEventListener('input', e => {
+                state.initCo2 = parseFloat(e.target.value);
+                const derivedO2 = co2ToO2(state.initCo2);
+                document.getElementById('valInitCo2').innerText = Math.round(state.initCo2) + ' ppm';
+                document.getElementById('valInitO2').innerText = derivedO2.toFixed(2) + ' %';
+                if (!state.isRunning) {
+                    state.co2 = state.initCo2;
+                    state.o2 = derivedO2;
+                    resetHistoryData();
+                    updateUI();
+                }
+            });
+
+            // Placement coordinate sliders
+            document.getElementById('sliderPlaceX').addEventListener('input', e => {
+                state.placeX = parseFloat(e.target.value);
+                document.getElementById('valPlaceX').innerText = state.placeX.toFixed(1);
+            });
+            document.getElementById('sliderPlaceZ').addEventListener('input', e => {
+                state.placeZ = parseFloat(e.target.value);
+                document.getElementById('valPlaceZ').innerText = state.placeZ.toFixed(1);
+            });
+
+            // Box size sliders
+            document.getElementById('sliderBoxW').addEventListener('input', e => {
+                state.boxW = parseFloat(e.target.value);
+                document.getElementById('valBoxW').innerText = state.boxW.toFixed(1);
+            });
+            document.getElementById('sliderBoxH').addEventListener('input', e => {
+                state.boxH = parseFloat(e.target.value);
+                document.getElementById('valBoxH').innerText = state.boxH.toFixed(2);
+            });
+            document.getElementById('sliderBoxD').addEventListener('input', e => {
+                state.boxD = parseFloat(e.target.value);
+                document.getElementById('valBoxD').innerText = state.boxD.toFixed(1);
+            });
+
+            // Coordinate-based Add Person button
+            document.getElementById('addPersonBtn').addEventListener('click', () => {
+                const { x, z } = userToRoom(state.placeX, state.placeZ);
+                placePersonAtRoomCoords(x, z);
+            });
+
+            // Coordinate-based Add Box button
+            document.getElementById('addBoxBtn').addEventListener('click', () => {
+                const { x, z } = userToRoom(state.placeX, state.placeZ);
+                addPlacedBox(x, z, state.boxW, state.boxH, state.boxD);
+            });
+
+            // Click-to-place mode buttons
             document.getElementById('placeModePersonBtn').addEventListener('click', () => enterPlaceMode('person'));
             document.getElementById('placeModeBoxBtn').addEventListener('click', () => enterPlaceMode('box'));
+
             document.getElementById('removeModePersonBtn').addEventListener('click', () => {
                 if (state.peopleCount > 0) {
                     state.peopleCount--;
@@ -1365,6 +1587,9 @@
         window.onload = () => {
             init3D();
             setupEventListeners();
+            // Show initial condition display values
+            document.getElementById('valInitO2').innerText = co2ToO2(state.initCo2).toFixed(2) + ' %';
+            updateUI();
             animate();
         };
     </script>
