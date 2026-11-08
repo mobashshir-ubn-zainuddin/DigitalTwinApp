@@ -29,10 +29,15 @@ jobs:
           key: electron-${{ runner.os }}-${{ hashFiles('package.json') }}
           restore-keys: electron-${{ runner.os }}-
 
+      - name: Cache electron-builder binaries
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\electron-builder\Cache
+          key: electron-builder-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: electron-builder-${{ runner.os }}-
+
       - name: Install dependencies
         run: npm install
-        env:
-          ELECTRON_GET_USE_PROXY: false
 
       - name: Build Windows EXE
         run: npm run build:win
