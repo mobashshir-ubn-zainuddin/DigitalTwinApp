@@ -26,21 +26,30 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~\AppData\Local\electron\Cache
-          key: electron-${{ runner.os }}-${{ hashFiles('package.json') }}
+          key: electron-${{ runner.os }}-28.3.3
           restore-keys: electron-${{ runner.os }}-
 
       - name: Cache electron-builder binaries
         uses: actions/cache@v4
         with:
           path: ~\AppData\Local\electron-builder\Cache
-          key: electron-builder-${{ runner.os }}-${{ hashFiles('package.json') }}
+          key: electron-builder-${{ runner.os }}-winCodeSign-2.6.0
           restore-keys: electron-builder-${{ runner.os }}-
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies (with retry)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          command: npm install
 
-      - name: Build Windows EXE
-        run: npm run build:win
+      - name: Build Windows EXE (with retry)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          command: npm run build:win
+          new_command_on_retry: npm run build:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
