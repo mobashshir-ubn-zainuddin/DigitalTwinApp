@@ -2,9 +2,7 @@
 
 Interactive 3D desktop simulation of a room environment -- real-time physics, live parameter editing, indoor/outdoor views.
 
-[![Build and Release](https://github.com/mobashshir-ubn-zainuddin/DigitalTwinApp/actions/workflows/build-release.yml/badge.svg?branch=main&event=push)](https://github.com/mobashshir-ubn-zainuddin/DigitalTwinApp/actions/workflows/build-release.yml)
-[![Latest Release](https://img.shields.io/github/v/release/mobashshir-ubn-zainuddin/DigitalTwinApp?label=latest%20release&color=blue)](https://github.com/mobashshir-ubn-zainuddin/DigitalTwinApp/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/mobashshir-ubn-zainuddin/DigitalTwinApp/total?color=green)](https://github.com/mobashshir-ubn-zainuddin/DigitalTwinApp/releases)
+[![Build and Release](https://github.com/mobashshir-ubn-zainuddin/DigitalTwinApp/actions/workflows/build-release.yml/badge.svg)](https://github.com/mobashshir-ubn-zainuddin/DigitalTwinApp/actions/workflows/build-release.yml)
 
 ---
 

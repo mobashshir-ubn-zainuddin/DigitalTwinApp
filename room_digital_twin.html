@@ -11,6 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body {
@@ -108,7 +110,13 @@
             </span>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+            <button id="toggleParamsBtn" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition-all flex items-center gap-2">
+                <i class="fa-solid fa-sliders"></i> Parameters
+            </button>
+            <button id="downloadExcelBtn" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white transition-all flex items-center gap-2" title="Download simulation results as Excel">
+                <i class="fa-solid fa-file-excel"></i> Export Excel
+            </button>
             <button id="toggleViewBtn" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md shadow-blue-900/40 flex items-center gap-2">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> <span id="toggleViewText">Step Outside</span>
             </button>
@@ -122,7 +130,7 @@
     <div id="canvas-container" class="absolute inset-0 z-0"></div>
 
     <!-- Right Control Panel Sidebar -->
-    <aside class="absolute top-16 right-5 bottom-24 w-80 z-20 glass-panel rounded-2xl p-4 flex flex-col justify-between overflow-y-auto">
+    <aside id="controlsSidebar" class="absolute top-16 right-5 bottom-24 w-80 z-20 glass-panel rounded-2xl p-4 flex flex-col justify-between overflow-y-auto">
         <div class="space-y-4">
             
             <!-- Outside Controls Section (Shown when OUTSIDE VIEW) -->
@@ -268,6 +276,30 @@
             </div>
         </div>
 
+        <!-- Place Objects Section -->
+        <div class="space-y-2 pt-2 border-t border-slate-800">
+            <div class="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-cube"></i> Place Objects
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+                <button id="placeModePersonBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-purple-600/40 text-purple-300 bg-purple-950/40 hover:bg-purple-900/50 transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-person"></i> Add Person
+                </button>
+                <button id="removeModePersonBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-slate-600/60 text-slate-300 bg-slate-800/60 hover:bg-slate-700 transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-person-walking-arrow-right"></i> Remove
+                </button>
+                <button id="placeModeBoxBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-purple-600/40 text-purple-300 bg-purple-950/40 hover:bg-purple-900/50 transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-box"></i> Add Box
+                </button>
+                <button id="removeBoxBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-slate-600/60 text-slate-300 bg-slate-800/60 hover:bg-slate-700 transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> Remove Box
+                </button>
+            </div>
+            <div id="placeModeStatus" class="hidden text-center text-xs py-1.5 px-2 rounded-lg bg-yellow-900/40 text-yellow-300 border border-yellow-500/30 animate-pulse">
+                <i class="fa-solid fa-crosshairs"></i> Click on the floor to place
+            </div>
+        </div>
+
         <!-- Run / Stop Simulation Button -->
         <div class="pt-3 border-t border-slate-700/60 mt-3">
             <button id="toggleSimRunBtn" class="w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 toggle-btn-active transition-all transform active:scale-95 flex items-center justify-center gap-2">
@@ -401,8 +433,21 @@
             humidity: 12.0,
             co2: 896.0,
             o2: 20.90,
-            lux: 810.0
+            lux: 810.0,
+            placeMode: null  // null | 'person' | 'box'
         };
+
+        // Export history for Excel download (1 record per real second)
+        const exportHistory = [];
+        let lastExportRealTime = 0;
+
+        // User-placed objects
+        let customPeoplePositions = [];
+        let placedBoxes = [];
+        let floorRaycastPlane = null;
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let mouseDownPos = { x: 0, y: 0 };
 
         // Telemetry History Buffers for Charts
         const MAX_HIST = 40;
@@ -484,6 +529,14 @@
             floor.position.y = -0.05;
             floor.receiveShadow = true;
             roomGroup.add(floor);
+
+            // Invisible floor plane for object placement raycasting
+            const rayGeo = new THREE.PlaneGeometry(ROOM_DIM.width * 3, ROOM_DIM.depth * 3);
+            const rayMat = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
+            floorRaycastPlane = new THREE.Mesh(rayGeo, rayMat);
+            floorRaycastPlane.rotation.x = -Math.PI / 2;
+            floorRaycastPlane.position.y = 0.02;
+            scene.add(floorRaycastPlane);
 
             // Ceiling / Roof
             const roofGeo = new THREE.BoxGeometry(ROOM_DIM.width + 0.2, 0.15, ROOM_DIM.depth + 0.2);
@@ -726,7 +779,7 @@
             const colors = [0xef4444, 0x3b82f6, 0x10b981, 0xf59e0b, 0x8b5cf6, 0xec4899, 0x06b6d4, 0x84cc16];
             // Seated & standing positions near sofa & workstations
             const presetPos = [
-                { x: -1.6, z: -1.2 }, { x: 0, z: -1.2 }, { x: 1.6, z: -1.2 },
+                { x: -1.6, z: -1.5 }, { x: 0, z: -1.5 }, { x: 1.6, z: -1.5 },
                 { x: 1.8, z: -0.5 }, { x: 1.8, z: 0.5 }, { x: -0.5, z: 0.5 },
                 { x: 0.5, z: 0.8 }, { x: -1.5, z: 0.8 }
             ];
@@ -750,7 +803,9 @@
                 head.castShadow = true;
                 avatarGroup.add(head);
 
-                const pos = presetPos[i % presetPos.length];
+                const pos = (customPeoplePositions[i] !== undefined)
+                    ? customPeoplePositions[i]
+                    : presetPos[i % presetPos.length];
                 avatarGroup.position.set(pos.x, 0, pos.z);
 
                 roomGroup.add(avatarGroup);
@@ -897,6 +952,24 @@
             const sunLux = state.sunIntensity * (1 - state.sunroofTint / 100) * 4.5;
             state.lux = Math.round(ledLux + sunLux);
 
+            // Record to export history (once per real second)
+            const realNow = performance.now() / 1000;
+            if (realNow - lastExportRealTime >= 1.0) {
+                lastExportRealTime = realNow;
+                exportHistory.push({
+                    simTime: formatTime(state.elapsedSeconds),
+                    temp: parseFloat(state.temp.toFixed(2)),
+                    humidity: parseFloat(state.humidity.toFixed(2)),
+                    co2: parseFloat(state.co2.toFixed(2)),
+                    o2: parseFloat(state.o2.toFixed(2)),
+                    lux: Math.round(state.lux),
+                    ac: state.acState ? 'ON' : 'OFF',
+                    fanRpm: Math.round(state.fanRpm),
+                    people: state.peopleCount
+                });
+                if (exportHistory.length > 3600) exportHistory.shift();
+            }
+
             // Append to Chart History Buffers
             historyData.temp.push(state.temp);
             historyData.temp.shift();
@@ -1018,6 +1091,119 @@
             drawSparkline('chartLux', historyData.lux, '#fde047');
         }
 
+        // --- EXCEL EXPORT ---
+        function downloadExcel() {
+            if (!window.XLSX) { alert('Excel library not loaded. Check internet connection.'); return; }
+            if (exportHistory.length === 0) { alert('No data yet. Run the simulation first.'); return; }
+
+            const wb = XLSX.utils.book_new();
+
+            // Sheet 1: Simulation Results
+            const headers = ['Sim Time', 'Temp (C)', 'Humidity (%)', 'CO2 (ppm)', 'O2 (%)', 'Luminosity (lux)', 'AC', 'Fan RPM', 'People'];
+            const rows = exportHistory.map(r => [r.simTime, r.temp, r.humidity, r.co2, r.o2, r.lux, r.ac, r.fanRpm, r.people]);
+            const ws1 = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            ws1['!cols'] = [14, 10, 12, 10, 8, 14, 6, 10, 8].map(w => ({ wch: w }));
+            XLSX.utils.book_append_sheet(wb, ws1, 'Simulation Results');
+
+            // Sheet 2: Parameters Snapshot
+            const pData = [
+                ['Parameter', 'Value', 'Unit'],
+                ['External Temp', state.extTemp, 'C'],
+                ['External Humidity', state.extHumidity, '%'],
+                ['Wall Permeability (U)', state.wallPermeability, 'W/m2K'],
+                ['Sun Intensity', state.sunIntensity, 'W/m2'],
+                ['Infiltration ACH', state.infiltrationACH, 'ACH'],
+                [],
+                ['AC Setpoint', state.acSetpoint, 'C'],
+                ['AC Capacity', state.acCapacity, 'W'],
+                ['Sunroof Tint', state.sunroofTint, '%'],
+                ['LED Wattage (each)', state.ledWattage, 'W'],
+                ['PC Power Rating', state.pcPower, 'W'],
+                ['CPU+GPU Usage', state.cpuUsage, '%'],
+                ['Fan RPM', Math.round(state.fanRpm), 'RPM'],
+                ['Fan Auto Mode', state.fanAutoMode ? 'ON' : 'OFF', ''],
+                ['People in Room', state.peopleCount, ''],
+                ['Simulation Speed', state.simSpeed, 'x'],
+                [],
+                ['Total Sim Time', formatTime(state.elapsedSeconds), ''],
+                ['Export Date', new Date().toLocaleString(), ''],
+                ['Records Exported', exportHistory.length, '']
+            ];
+            const ws2 = XLSX.utils.aoa_to_sheet(pData);
+            ws2['!cols'] = [{ wch: 24 }, { wch: 14 }, { wch: 10 }];
+            XLSX.utils.book_append_sheet(wb, ws2, 'Parameters');
+
+            const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `RoomTwin_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }
+
+        // --- OBJECT PLACEMENT ---
+        function enterPlaceMode(type) {
+            state.placeMode = type;
+            document.getElementById('canvas-container').style.cursor = 'crosshair';
+            document.getElementById('placeModeStatus').classList.remove('hidden');
+        }
+
+        function exitPlaceMode() {
+            state.placeMode = null;
+            document.getElementById('canvas-container').style.cursor = '';
+            document.getElementById('placeModeStatus').classList.add('hidden');
+        }
+
+        function addPlacedBox(x, z) {
+            const geo = new THREE.BoxGeometry(0.5, 0.75, 0.5);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.6, metalness: 0.2 });
+            const box = new THREE.Mesh(geo, mat);
+            box.position.set(x, 0.375, z);
+            box.castShadow = true;
+            box.receiveShadow = true;
+            roomGroup.add(box);
+            placedBoxes.push(box);
+        }
+
+        function onCanvasMouseDown(e) {
+            mouseDownPos = { x: e.clientX, y: e.clientY };
+        }
+
+        function onCanvasMouseUp(e) {
+            if (!state.placeMode) return;
+            if (Math.hypot(e.clientX - mouseDownPos.x, e.clientY - mouseDownPos.y) > 6) return; // was a drag
+
+            const container = document.getElementById('canvas-container');
+            const rect = container.getBoundingClientRect();
+            mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObject(floorRaycastPlane);
+            if (!hits.length) return;
+
+            const pt = hits[0].point;
+            const halfW = ROOM_DIM.width / 2 - 0.4;
+            const halfD = ROOM_DIM.depth / 2 - 0.4;
+            const x = Math.max(-halfW, Math.min(halfW, pt.x));
+            const z = Math.max(-halfD, Math.min(halfD, pt.z));
+
+            if (state.placeMode === 'person') {
+                customPeoplePositions[state.peopleCount] = { x, z };
+                state.peopleCount = Math.min(8, state.peopleCount + 1);
+                document.getElementById('sliderPeople').value = state.peopleCount;
+                document.getElementById('valPeople').innerText = state.peopleCount;
+                updatePeopleAvatars();
+            } else if (state.placeMode === 'box') {
+                addPlacedBox(x, z);
+            }
+            exitPlaceMode();
+        }
+
         // --- BIND EVENT LISTENERS ---
         function setupEventListeners() {
             // View Mode Toggle
@@ -1034,6 +1220,12 @@
                 state.elapsedSeconds = 0;
                 state.peopleCount = 2;
                 state.fanRpm = 287;
+                customPeoplePositions = [];
+                placedBoxes.forEach(b => roomGroup.remove(b));
+                placedBoxes = [];
+                exportHistory.length = 0;
+                lastExportRealTime = 0;
+                exitPlaceMode();
                 document.getElementById('sliderPeople').value = 2;
                 document.getElementById('valPeople').innerText = '2';
                 document.getElementById('sliderFanRpm').value = 287;
@@ -1091,6 +1283,40 @@
 
             // Simulation Speed
             bindSlider('sliderSimSpeed', 'valSimSpeed', ' ×', v => state.simSpeed = v);
+
+            // Parameters sidebar toggle
+            document.getElementById('toggleParamsBtn').addEventListener('click', () => {
+                document.getElementById('controlsSidebar').classList.toggle('hidden');
+            });
+
+            // Download Excel
+            document.getElementById('downloadExcelBtn').addEventListener('click', downloadExcel);
+
+            // Place Objects buttons
+            document.getElementById('placeModePersonBtn').addEventListener('click', () => enterPlaceMode('person'));
+            document.getElementById('placeModeBoxBtn').addEventListener('click', () => enterPlaceMode('box'));
+            document.getElementById('removeModePersonBtn').addEventListener('click', () => {
+                if (state.peopleCount > 0) {
+                    state.peopleCount--;
+                    if (customPeoplePositions.length > state.peopleCount) customPeoplePositions.splice(state.peopleCount, 1);
+                    document.getElementById('sliderPeople').value = state.peopleCount;
+                    document.getElementById('valPeople').innerText = state.peopleCount;
+                    updatePeopleAvatars();
+                }
+            });
+            document.getElementById('removeBoxBtn').addEventListener('click', () => {
+                if (placedBoxes.length > 0) {
+                    roomGroup.remove(placedBoxes.pop());
+                }
+            });
+
+            // Canvas mouse events for place mode (use mouseup to distinguish from orbit drags)
+            const canvas = document.getElementById('canvas-container');
+            canvas.addEventListener('mousedown', onCanvasMouseDown);
+            canvas.addEventListener('mouseup', onCanvasMouseUp);
+
+            // Cancel place mode on Escape
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') exitPlaceMode(); });
         }
 
         function updateFanAutoBtn() {
