@@ -1,6 +1,6 @@
 {
   "name": "room-digital-twin",
-  "version": "1.0.0",
+  "version": "1.0.7",
   "description": "Room Digital Twin — interactive 3D simulation of a room with AC, fan, computers and occupants",
   "main": "main.js",
   "author": "aaryannsinghparmar@gmail.com",
