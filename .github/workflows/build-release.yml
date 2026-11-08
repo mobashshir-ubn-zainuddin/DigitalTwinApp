@@ -36,22 +36,22 @@ jobs:
           key: electron-builder-${{ runner.os }}-winCodeSign-2.6.0
           restore-keys: electron-builder-${{ runner.os }}-
 
-      - name: Install dependencies (with retry)
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          command: npm install
+      - name: Install dependencies
+        run: npm install
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
       - name: Build Windows EXE (with retry)
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 15
-          max_attempts: 3
+          max_attempts: 5
+          retry_wait_seconds: 30
           command: npm run build:win
-          new_command_on_retry: npm run build:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+          ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
       - name: List build output
         run: Get-ChildItem dist -Recurse | Select-Object Name, Length
