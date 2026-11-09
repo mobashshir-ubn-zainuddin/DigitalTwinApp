@@ -214,9 +214,12 @@
                         <input type="range" id="sliderInitCo2" min="400" max="2500" step="10" value="896">
                     </div>
 
-                    <div class="flex justify-between text-xs text-slate-400 pt-0.5">
-                        <span>O₂ (from CO₂)</span>
-                        <span id="valInitO2" class="text-green-400 font-semibold">20.65 %</span>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-medium text-slate-300">
+                            <span>O₂</span>
+                            <span id="valInitO2" class="text-green-400 font-semibold">20.65 %</span>
+                        </div>
+                        <input type="range" id="sliderInitO2" min="18" max="20.95" step="0.05" value="20.65">
                     </div>
                 </div>
 
@@ -301,9 +304,9 @@
                     </div>
                     <div class="flex justify-between text-xs font-medium text-slate-300">
                         <span>People in Room</span>
-                        <span id="valPeople" class="text-blue-400 font-semibold">2</span>
+                        <span id="valPeople" class="text-blue-400 font-semibold">0</span>
                     </div>
-                    <input type="range" id="sliderPeople" min="0" max="8" step="1" value="2">
+                    <input type="range" id="sliderPeople" min="0" max="8" step="1" value="0">
 
                     <div class="flex justify-between text-xs font-medium text-slate-300 mt-1">
                         <span>Simulation Speed</span>
@@ -384,6 +387,49 @@
             </div>
         </div>
 
+        <!-- Point Probe Section -->
+        <div class="space-y-2 pt-2 border-t border-slate-800">
+            <div class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-flask-vial"></i> Point Probe
+            </div>
+            <div class="bg-slate-900/60 rounded-xl p-2 space-y-1.5 border border-slate-700/40">
+                <div class="text-[10px] text-slate-500 uppercase font-semibold">Probe Coordinates (m)</div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[10px] text-slate-400"><span>X (0–6)</span><span id="valProbeX" class="text-cyan-300 font-semibold">3.0</span></div>
+                        <input type="range" id="sliderProbeX" min="0" max="6" step="0.1" value="3.0">
+                    </div>
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[10px] text-slate-400"><span>Z (0–5)</span><span id="valProbeZ" class="text-cyan-300 font-semibold">2.5</span></div>
+                        <input type="range" id="sliderProbeZ" min="0" max="5" step="0.1" value="2.5">
+                    </div>
+                </div>
+                <button id="probeBtn" class="w-full py-1.5 rounded-lg text-xs font-medium border border-cyan-600/40 text-cyan-300 bg-cyan-950/40 hover:bg-cyan-900/50 transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-crosshairs"></i> Probe Point
+                </button>
+            </div>
+            <div id="probeResults" class="hidden bg-slate-900/60 rounded-xl p-2 border border-cyan-700/30 space-y-1">
+                <div class="text-[10px] font-bold text-cyan-400">At X=<span id="probeResX">-</span> m, Z=<span id="probeResZ">-</span> m</div>
+                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px]">
+                    <div class="flex justify-between"><span class="text-slate-400">Temperature</span><span id="prT" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Rel. Humidity</span><span id="prRH" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Dew Point</span><span id="prTdp" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Wet Bulb</span><span id="prTwb" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Vapour Pr.</span><span id="prPv" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Sat. Pr.</span><span id="prPws" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Hum. Ratio</span><span id="prOmega" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Enthalpy</span><span id="prH" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Air Density</span><span id="prRho" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">CO₂</span><span id="prCo2" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">O₂</span><span id="prO2" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between col-span-2 border-t border-slate-700/40 pt-0.5 mt-0.5">
+                        <span class="text-slate-400">Air Speed (Vx, Vz, |V|)</span>
+                        <span id="prVel" class="text-white font-mono">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Run / Stop Simulation Button -->
         <div class="pt-3 border-t border-slate-700/60 mt-3">
             <button id="toggleSimRunBtn" class="w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 toggle-btn-inactive transition-all transform active:scale-95 flex items-center justify-center gap-2">
@@ -429,6 +475,38 @@
                     <button id="toggleTelemetryBtn" class="ml-1 px-2 py-0.5 rounded-lg bg-slate-700/60 hover:bg-slate-600 text-slate-300 hover:text-white transition text-[10px] flex items-center gap-1 border border-slate-600/40" title="Collapse/expand charts">
                         <i class="fa-solid fa-chevron-down" id="telemetryChevron"></i>
                     </button>
+                </div>
+            </div>
+
+            <!-- Psychrometric Summary Row (collapsible with charts) -->
+            <div id="psychroRow" class="flex items-center gap-5 text-xs border-b border-slate-800/60 pb-2 px-1 flex-wrap">
+                <div>
+                    <span class="text-[9px] text-slate-500 uppercase font-semibold block">Dew Point</span>
+                    <span id="metricDewPt" class="font-extrabold text-sky-300">-</span>
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 uppercase font-semibold block">Wet Bulb</span>
+                    <span id="metricWetBulb" class="font-extrabold text-teal-300">-</span>
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 uppercase font-semibold block">Enthalpy</span>
+                    <span id="metricEnthalpy" class="font-extrabold text-purple-300">-</span>
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 uppercase font-semibold block">Air Density</span>
+                    <span id="metricDensity" class="font-extrabold text-orange-300">-</span>
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 uppercase font-semibold block">Vapour Pr.</span>
+                    <span id="metricVapPr" class="font-extrabold text-pink-300">-</span>
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 uppercase font-semibold block">Hum. Ratio</span>
+                    <span id="metricOmega" class="font-extrabold text-lime-300">-</span>
+                </div>
+                <div>
+                    <span class="text-[9px] text-slate-500 uppercase font-semibold block">Sat. Pr.</span>
+                    <span id="metricPws" class="font-extrabold text-rose-300">-</span>
                 </div>
             </div>
 
@@ -495,6 +573,7 @@
             initTemp: 29.3,
             initHumidity: 12.0,
             initCo2: 896.0,
+            initO2: 20.65,
 
             // Outdoor Parameters
             extTemp: 35.0,
@@ -517,7 +596,7 @@
             fanRpm: 287,
             fanAutoMode: true,
 
-            peopleCount: 2,
+            peopleCount: 0,
             simSpeed: 108,
 
             // Dynamic Environmental Telemetry (starts at initial conditions)
@@ -552,17 +631,20 @@
 
         function toggleTelemetry() {
             telemetryExpanded = !telemetryExpanded;
-            const charts = document.getElementById('telemetryCharts');
-            const chevron = document.getElementById('telemetryChevron');
-            const sidebar = document.getElementById('controlsSidebar');
+            const charts   = document.getElementById('telemetryCharts');
+            const psychro  = document.getElementById('psychroRow');
+            const chevron  = document.getElementById('telemetryChevron');
+            const sidebar  = document.getElementById('controlsSidebar');
             if (telemetryExpanded) {
                 charts.classList.remove('hidden');
+                psychro.classList.remove('hidden');
                 chevron.className = 'fa-solid fa-chevron-down';
-                sidebar.style.bottom = '96px';
+                sidebar.style.bottom = '210px';
             } else {
                 charts.classList.add('hidden');
+                psychro.classList.add('hidden');
                 chevron.className = 'fa-solid fa-chevron-up';
-                sidebar.style.bottom = '56px';
+                sidebar.style.bottom = '60px';
             }
         }
 
@@ -593,9 +675,139 @@
             historyData.lux.fill(state.lux);
         }
 
-        // Helper: compute O2 from CO2 (consistent formula)
-        function co2ToO2(co2) {
-            return Math.max(18.0, Math.min(20.95, 20.95 - (co2 - 400) * 0.0006));
+        // Global preset person positions (used by avatars and spatial model)
+        const PRESET_POS = [
+            { x: -1.6, z: -1.5 }, { x: 0, z: -1.5 }, { x: 1.6, z: -1.5 },
+            { x: 1.8, z: -0.5 }, { x: 1.8, z: 0.5 }, { x: -0.5, z: 0.5 },
+            { x: 0.5, z: 0.8 }, { x: -1.5, z: 0.8 }
+        ];
+
+        function getPersonRoomPos(i) {
+            return (customPeoplePositions[i] !== undefined) ? customPeoplePositions[i] : PRESET_POS[i % PRESET_POS.length];
+        }
+
+        // --- PSYCHROMETRIC ENGINE ---
+        // Saturation vapour pressure: Magnus formula (accurate to 0.1% for -40°C to 60°C)
+        // pws = 610.78 * exp(17.27 * T / (T + 237.3))  [Pa]
+        function computePsychrometrics(T, RH_pct) {
+            const P = 101325; // Pa, standard atmosphere
+            const RH = Math.max(0, Math.min(100, RH_pct)) / 100;
+            const pws = 610.78 * Math.exp(17.27 * T / (T + 237.3));
+            const pv  = RH * pws;
+            // Humidity ratio: omega = 0.621945 * pv / (P - pv)  [kg_w/kg_da]
+            const omega = 0.621945 * pv / Math.max(P - pv, 1);
+            // Dew point: inverse Magnus
+            const lnR = Math.log(Math.max(pv, 0.01) / 610.78);
+            const Tdp = 237.3 * lnR / (17.27 - lnR);
+            // Wet bulb: Stull (2011) empirical formula
+            const Twb = T * Math.atan(0.151977 * Math.sqrt(RH_pct + 8.313659))
+                      + Math.atan(T + RH_pct)
+                      - Math.atan(RH_pct - 1.676331)
+                      + 0.00391838 * Math.pow(RH_pct, 1.5) * Math.atan(0.023101 * RH_pct)
+                      - 4.686035;
+            // Specific enthalpy: h = 1.006*T + omega*(2501 + 1.86*T)  [kJ/kg_da]
+            const h = 1.006 * T + omega * (2501 + 1.86 * T);
+            // Moist-air density: rho = (P-pv)/(287.058*Tk) + pv/(461.495*Tk)  [kg/m³]
+            const Tk = T + 273.15;
+            const rho = (P - pv) / (287.058 * Tk) + pv / (461.495 * Tk);
+            // Specific volume [m³/kg_da]
+            const v = (287.058 * Tk * (1 + omega / 0.621945)) / P;
+            return {
+                pws: Math.round(pws),
+                pv:  Math.round(pv),
+                omega: (omega * 1000).toFixed(1),  // g/kg
+                Tdp: Tdp.toFixed(1),
+                Twb: Twb.toFixed(1),
+                h:   h.toFixed(1),
+                rho: rho.toFixed(3),
+                v:   v.toFixed(3),
+                q:   ((omega / (1 + omega)) * 1000).toFixed(1)  // g/kg_ma
+            };
+        }
+
+        // --- SPATIAL ENVIRONMENT MODEL (1-decimal accuracy) ---
+        // Returns local temperature at Three.js coords (tx, tz) considering heat sources & AC
+        function computeLocalTemp(tx, tz) {
+            let T = state.temp;
+            for (let i = 0; i < state.peopleCount; i++) {
+                const p = getPersonRoomPos(i);
+                const d2 = (tx - p.x) ** 2 + (tz - p.z) ** 2;
+                T += 0.8 * Math.exp(-d2 / 0.6);
+            }
+            const pcPos = [{ x: -1.6, z: -1.9 }, { x: 0, z: -1.9 }, { x: 1.6, z: -1.9 }];
+            for (const p of pcPos) {
+                const d2 = (tx - p.x) ** 2 + (tz - p.z) ** 2;
+                T += (state.pcPower * state.cpuUsage / 100000) * 0.3 * Math.exp(-d2 / 0.5);
+            }
+            if (state.acState) {
+                const dAC = Math.sqrt(tx * tx + (tz + 2.0) ** 2);
+                T -= (state.acCapacity / 3500) * 1.5 * Math.exp(-dAC * dAC / 3.0);
+            }
+            return Math.round(T * 10) / 10;
+        }
+
+        // Returns local relative humidity at Three.js coords (tx, tz)
+        function computeLocalHumidity(tx, tz) {
+            let RH = state.humidity;
+            for (let i = 0; i < state.peopleCount; i++) {
+                const p = getPersonRoomPos(i);
+                const d2 = (tx - p.x) ** 2 + (tz - p.z) ** 2;
+                RH += 2.5 * Math.exp(-d2 / 0.8);
+            }
+            return Math.min(100, Math.round(RH * 10) / 10);
+        }
+
+        // Returns air velocity estimate at Three.js coords (tx, tz)
+        // Simple fan-driven flow + buoyancy perturbations, accurate to 1 decimal place
+        function computeLocalVelocity(tx, tz) {
+            const vFan = (state.fanRpm / 2000) * 1.2; // max 1.2 m/s at 2000 RPM
+            // Fan on left wall (-3, y, 0) blows air rightward (+X)
+            // Flow decays from left to right
+            let vx = vFan * (1 - Math.max(0, tx + 3) / 6.0) * 0.8 + 0.1;
+            let vz = 0;
+            // Buoyancy: warm air spreads radially away from person at floor level
+            for (let i = 0; i < state.peopleCount; i++) {
+                const p = getPersonRoomPos(i);
+                const dist = Math.max(0.1, Math.sqrt((tx - p.x) ** 2 + (tz - p.z) ** 2));
+                if (dist < 1.5) {
+                    vx += 0.1 * (tx - p.x) / dist * Math.exp(-dist * dist / 0.5);
+                    vz += 0.1 * (tz - p.z) / dist * Math.exp(-dist * dist / 0.5);
+                }
+            }
+            // AC cold supply: creates outward flow from back wall
+            if (state.acState) {
+                const dAC = Math.max(0.1, Math.sqrt(tx * tx + (tz + 2.0) ** 2));
+                if (dAC < 2.5) {
+                    const fAC = (state.acCapacity / 3500) * 0.4 * Math.exp(-dAC * dAC / 2.5);
+                    vz += fAC * (tz + 2.0) / dAC;
+                }
+            }
+            const vmag = Math.sqrt(vx * vx + vz * vz);
+            return { vx: vx.toFixed(1), vz: vz.toFixed(1), vmag: vmag.toFixed(1) };
+        }
+
+        // --- POINT PROBE ---
+        function probePoint(ux, uz) {
+            const { x, z } = userToRoom(ux, uz);
+            const localT  = computeLocalTemp(x, z);
+            const localRH = computeLocalHumidity(x, z);
+            const ps  = computePsychrometrics(localT, localRH);
+            const vel = computeLocalVelocity(x, z);
+            document.getElementById('probeResX').innerText = ux.toFixed(1);
+            document.getElementById('probeResZ').innerText = uz.toFixed(1);
+            document.getElementById('prT').innerText    = localT.toFixed(1) + ' °C';
+            document.getElementById('prRH').innerText   = localRH.toFixed(1) + ' %';
+            document.getElementById('prTdp').innerText  = ps.Tdp + ' °C';
+            document.getElementById('prTwb').innerText  = ps.Twb + ' °C';
+            document.getElementById('prPv').innerText   = ps.pv  + ' Pa';
+            document.getElementById('prPws').innerText  = ps.pws + ' Pa';
+            document.getElementById('prOmega').innerText = ps.omega + ' g/kg';
+            document.getElementById('prH').innerText    = ps.h + ' kJ/kg';
+            document.getElementById('prRho').innerText  = ps.rho + ' kg/m³';
+            document.getElementById('prCo2').innerText  = Math.round(state.co2) + ' ppm';
+            document.getElementById('prO2').innerText   = state.o2.toFixed(1) + ' %';
+            document.getElementById('prVel').innerText  = vel.vx + ', ' + vel.vz + ', ' + vel.vmag + ' m/s';
+            document.getElementById('probeResults').classList.remove('hidden');
         }
 
         // --- THREE.JS SCENE SETUP ---
@@ -916,12 +1128,6 @@
             peopleAvatars = [];
 
             const colors = [0xef4444, 0x3b82f6, 0x10b981, 0xf59e0b, 0x8b5cf6, 0xec4899, 0x06b6d4, 0x84cc16];
-            // Seated & standing positions near sofa & workstations
-            const presetPos = [
-                { x: -1.6, z: -1.5 }, { x: 0, z: -1.5 }, { x: 1.6, z: -1.5 },
-                { x: 1.8, z: -0.5 }, { x: 1.8, z: 0.5 }, { x: -0.5, z: 0.5 },
-                { x: 0.5, z: 0.8 }, { x: -1.5, z: 0.8 }
-            ];
 
             for (let i = 0; i < state.peopleCount; i++) {
                 const avatarGroup = new THREE.Group();
@@ -942,9 +1148,7 @@
                 head.castShadow = true;
                 avatarGroup.add(head);
 
-                const pos = (customPeoplePositions[i] !== undefined)
-                    ? customPeoplePositions[i]
-                    : presetPos[i % presetPos.length];
+                const pos = getPersonRoomPos(i);
                 avatarGroup.position.set(pos.x, 0, pos.z);
 
                 roomGroup.add(avatarGroup);
@@ -1043,9 +1247,11 @@
             state.co2 += (co2GenRate - (state.co2 - co2Target) * fanVentilationRate) * (simDt / 10);
             state.co2 = Math.max(400, Math.min(2500, state.co2));
 
-            // 2. O2 Calculation (%)
-            const o2Target = 20.95 - (state.co2 - 400) * 0.0006;
-            state.o2 += (o2Target - state.o2) * 0.05 * (simDt / 5);
+            // 2. O2 Calculation (%) — independent of CO2; consumption-based model
+            // Each person consumes ~0.0125 %/10s; fan + infiltration replenish from outdoor 20.95 %
+            const o2ConsumptionRate = state.peopleCount * 0.0125;
+            const ventRate = (state.fanRpm / 2000) * 0.07 + (state.infiltrationACH * 0.004);
+            state.o2 += (-o2ConsumptionRate + (20.95 - state.o2) * ventRate) * (simDt / 10);
             state.o2 = Math.max(18.0, Math.min(20.95, state.o2));
 
             // 3. Heat & Temperature Calculation (°C)
@@ -1228,6 +1434,16 @@
             drawSparkline('chartCo2', historyData.co2, '#f59e0b');
             drawSparkline('chartO2', historyData.o2, '#38bdf8');
             drawSparkline('chartLux', historyData.lux, '#fde047');
+
+            // Psychrometric Metrics Row
+            const ps = computePsychrometrics(state.temp, state.humidity);
+            document.getElementById('metricDewPt').innerText    = ps.Tdp + '°C';
+            document.getElementById('metricWetBulb').innerText  = ps.Twb + '°C';
+            document.getElementById('metricEnthalpy').innerText = ps.h + ' kJ/kg';
+            document.getElementById('metricDensity').innerText  = ps.rho + ' kg/m³';
+            document.getElementById('metricVapPr').innerText    = ps.pv + ' Pa';
+            document.getElementById('metricOmega').innerText    = ps.omega + ' g/kg';
+            document.getElementById('metricPws').innerText      = ps.pws + ' Pa';
         }
 
         // --- EXCEL EXPORT ---
@@ -1357,10 +1573,10 @@
                 state.temp = state.initTemp;
                 state.humidity = state.initHumidity;
                 state.co2 = state.initCo2;
-                state.o2 = co2ToO2(state.initCo2);
+                state.o2 = state.initO2;
                 state.elapsedSeconds = 0;
                 state.isRunning = false;
-                state.peopleCount = 2;
+                state.peopleCount = 0;
                 state.fanRpm = 287;
                 customPeoplePositions = [];
                 placedBoxes.forEach(b => roomGroup.remove(b));
@@ -1374,8 +1590,9 @@
                 rb.className = rb.className.replace('toggle-btn-active', 'toggle-btn-inactive');
                 document.getElementById('simRunIcon').className = 'fa-solid fa-play';
                 document.getElementById('simRunText').innerText = 'Run Simulation';
-                document.getElementById('sliderPeople').value = 2;
-                document.getElementById('valPeople').innerText = '2';
+                document.getElementById('sliderPeople').value = 0;
+                document.getElementById('valPeople').innerText = '0';
+                document.getElementById('probeResults').classList.add('hidden');
                 document.getElementById('sliderFanRpm').value = 287;
                 document.getElementById('valFanRpm').innerText = '287 RPM';
                 updatePeopleAvatars();
@@ -1466,12 +1683,18 @@
             });
             document.getElementById('sliderInitCo2').addEventListener('input', e => {
                 state.initCo2 = parseFloat(e.target.value);
-                const derivedO2 = co2ToO2(state.initCo2);
                 document.getElementById('valInitCo2').innerText = Math.round(state.initCo2) + ' ppm';
-                document.getElementById('valInitO2').innerText = derivedO2.toFixed(2) + ' %';
                 if (!state.isRunning) {
                     state.co2 = state.initCo2;
-                    state.o2 = derivedO2;
+                    resetHistoryData();
+                    updateUI();
+                }
+            });
+            document.getElementById('sliderInitO2').addEventListener('input', e => {
+                state.initO2 = parseFloat(e.target.value);
+                document.getElementById('valInitO2').innerText = state.initO2.toFixed(2) + ' %';
+                if (!state.isRunning) {
+                    state.o2 = state.initO2;
                     resetHistoryData();
                     updateUI();
                 }
@@ -1539,6 +1762,19 @@
 
             // Cancel place mode on Escape
             document.addEventListener('keydown', e => { if (e.key === 'Escape') exitPlaceMode(); });
+
+            // Point Probe sliders & button
+            document.getElementById('sliderProbeX').addEventListener('input', e => {
+                document.getElementById('valProbeX').innerText = parseFloat(e.target.value).toFixed(1);
+            });
+            document.getElementById('sliderProbeZ').addEventListener('input', e => {
+                document.getElementById('valProbeZ').innerText = parseFloat(e.target.value).toFixed(1);
+            });
+            document.getElementById('probeBtn').addEventListener('click', () => {
+                const ux = parseFloat(document.getElementById('sliderProbeX').value);
+                const uz = parseFloat(document.getElementById('sliderProbeZ').value);
+                probePoint(ux, uz);
+            });
         }
 
         function updateFanAutoBtn() {
@@ -1587,8 +1823,9 @@
         window.onload = () => {
             init3D();
             setupEventListeners();
-            // Show initial condition display values
-            document.getElementById('valInitO2').innerText = co2ToO2(state.initCo2).toFixed(2) + ' %';
+            document.getElementById('valInitO2').innerText = state.initO2.toFixed(2) + ' %';
+            // Set sidebar bottom to match footer with charts expanded
+            document.getElementById('controlsSidebar').style.bottom = '210px';
             updateUI();
             animate();
         };
