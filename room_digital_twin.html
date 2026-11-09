@@ -999,25 +999,24 @@
             walls.frontTop.rotation.y = Math.PI;
             roomGroup.add(walls.frontTop);
 
-            // Door panel — pivots at left hinge (x = -0.5, z = 2.5)
+            // Sliding door panel — translates left along X to open (into the left wall pocket)
             doorPivotGroup = new THREE.Group();
-            doorPivotGroup.position.set(-doorW / 2, 0, ROOM_DIM.depth / 2);
+            doorPivotGroup.position.set(0, 0, ROOM_DIM.depth / 2);
             const doorGeo = new THREE.BoxGeometry(doorW, doorH, 0.05);
-            const doorMat = new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.7, side: THREE.DoubleSide });
-            const doorMesh = new THREE.Mesh(doorGeo, doorMat);
-            doorMesh.position.set(doorW / 2, doorH / 2, 0); // right half of pivot
-            doorMesh.castShadow = true;
-            doorPivotGroup.add(doorMesh);
-            // Door frame border (thin strips)
+            const doorMat = new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.6, side: THREE.DoubleSide });
+            const doorPanelMesh = new THREE.Mesh(doorGeo, doorMat);
+            doorPanelMesh.position.set(0, doorH / 2, 0); // centred over opening
+            doorPanelMesh.castShadow = true;
+            doorPivotGroup.add(doorPanelMesh);
+            // Static door frame (stays fixed, only the panel slides)
             const frameMat = new THREE.MeshStandardMaterial({ color: 0x5a3010, roughness: 0.5 });
-            [[-0.01, doorH / 2, 0, 0.06, doorH, 0.08],   // left stile
-             [doorW + 0.01, doorH / 2, 0, 0.06, doorH, 0.08],  // right stile
-             [doorW / 2, doorH + 0.03, 0, doorW + 0.12, 0.06, 0.08], // top rail
-             [doorW / 2, 0.03, 0, doorW + 0.12, 0.06, 0.08]           // bottom sill
+            [[-doorW / 2 - 0.03, doorH / 2, 0, 0.06, doorH + 0.06, 0.08],  // left jamb
+             [ doorW / 2 + 0.03, doorH / 2, 0, 0.06, doorH + 0.06, 0.08],  // right jamb
+             [0, doorH + 0.03, 0, doorW + 0.12, 0.06, 0.08]                 // top header
             ].forEach(([fx, fy, fz, fw, fh, fd]) => {
                 const f = new THREE.Mesh(new THREE.BoxGeometry(fw, fh, fd), frameMat);
                 f.position.set(fx, fy, fz);
-                doorPivotGroup.add(f);
+                roomGroup.add(f); // frame is fixed to room, not to sliding group
             });
             roomGroup.add(doorPivotGroup);
 
@@ -1441,9 +1440,9 @@
         }
 
         function update3DVisuals() {
-            // Door rotation — swings inward (into room, -Z direction)
+            // Sliding door — translates leftward along X (slides behind left wall panel)
             if (doorPivotGroup) {
-                doorPivotGroup.rotation.y = -(state.doorAngle * Math.PI / 180);
+                doorPivotGroup.position.x = -(state.doorAngle / 90) * 1.0;
             }
 
             // Fan Rotation
