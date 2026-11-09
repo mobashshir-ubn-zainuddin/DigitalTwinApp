@@ -382,6 +382,26 @@
                     <i class="fa-solid fa-crosshairs"></i> Click-Place Box
                 </button>
             </div>
+
+            <!-- Door Controls -->
+            <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                <div class="text-[11px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-door-open"></i> Door
+                </div>
+                <div class="bg-slate-900/60 rounded-xl p-2 space-y-2 border border-slate-700/40">
+                    <button id="toggleDoorBtn" class="w-full py-1.5 rounded-lg text-xs font-medium border border-orange-600/40 text-orange-300 bg-orange-950/40 hover:bg-orange-900/50 transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-door-closed" id="doorBtnIcon"></i>
+                        <span id="doorBtnText">Open Door</span>
+                    </button>
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[10px] text-slate-400">
+                            <span>Door Angle (0°–90°)</span>
+                            <span id="valDoorAngle" class="text-orange-300 font-semibold">0°</span>
+                        </div>
+                        <input type="range" id="sliderDoorAngle" min="0" max="90" step="1" value="0">
+                    </div>
+                </div>
+            </div>
             <div id="placeModeStatus" class="hidden text-center text-xs py-1.5 px-2 rounded-lg bg-yellow-900/40 text-yellow-300 border border-yellow-500/30 animate-pulse">
                 <i class="fa-solid fa-crosshairs"></i> Click on the floor to place
             </div>
@@ -403,13 +423,17 @@
                         <div class="flex justify-between text-[10px] text-slate-400"><span>Z (0–5)</span><span id="valProbeZ" class="text-cyan-300 font-semibold">2.5</span></div>
                         <input type="range" id="sliderProbeZ" min="0" max="5" step="0.1" value="2.5">
                     </div>
+                    <div class="space-y-0.5 col-span-2">
+                        <div class="flex justify-between text-[10px] text-slate-400"><span>Y / Height (0–3.2)</span><span id="valProbeY" class="text-cyan-300 font-semibold">1.0</span></div>
+                        <input type="range" id="sliderProbeY" min="0" max="3.2" step="0.1" value="1.0">
+                    </div>
                 </div>
                 <button id="probeBtn" class="w-full py-1.5 rounded-lg text-xs font-medium border border-cyan-600/40 text-cyan-300 bg-cyan-950/40 hover:bg-cyan-900/50 transition flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-crosshairs"></i> Probe Point
                 </button>
             </div>
             <div id="probeResults" class="hidden bg-slate-900/60 rounded-xl p-2 border border-cyan-700/30 space-y-1">
-                <div class="text-[10px] font-bold text-cyan-400">At X=<span id="probeResX">-</span> m, Z=<span id="probeResZ">-</span> m</div>
+                <div class="text-[10px] font-bold text-cyan-400">At X=<span id="probeResX">-</span> m, Y=<span id="probeResY">-</span> m, Z=<span id="probeResZ">-</span> m</div>
                 <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px]">
                     <div class="flex justify-between"><span class="text-slate-400">Temperature</span><span id="prT" class="text-white font-mono">-</span></div>
                     <div class="flex justify-between"><span class="text-slate-400">Rel. Humidity</span><span id="prRH" class="text-white font-mono">-</span></div>
@@ -423,7 +447,7 @@
                     <div class="flex justify-between"><span class="text-slate-400">CO₂</span><span id="prCo2" class="text-white font-mono">-</span></div>
                     <div class="flex justify-between"><span class="text-slate-400">O₂</span><span id="prO2" class="text-white font-mono">-</span></div>
                     <div class="flex justify-between col-span-2 border-t border-slate-700/40 pt-0.5 mt-0.5">
-                        <span class="text-slate-400">Air Speed (Vx, Vz, |V|)</span>
+                        <span class="text-slate-400">Air Speed (Vx, Vy, Vz, |V|)</span>
                         <span id="prVel" class="text-white font-mono">-</span>
                     </div>
                 </div>
@@ -597,6 +621,7 @@
             fanAutoMode: true,
 
             peopleCount: 0,
+            doorAngle: 0,
             simSpeed: 108,
 
             // Dynamic Environmental Telemetry (starts at initial conditions)
@@ -726,8 +751,8 @@
         }
 
         // --- SPATIAL ENVIRONMENT MODEL (1-decimal accuracy) ---
-        // Returns local temperature at Three.js coords (tx, tz) considering heat sources & AC
-        function computeLocalTemp(tx, tz) {
+        // Returns local temperature at Three.js coords (tx, ty, tz) with vertical stratification
+        function computeLocalTemp(tx, ty, tz) {
             let T = state.temp;
             for (let i = 0; i < state.peopleCount; i++) {
                 const p = getPersonRoomPos(i);
@@ -743,6 +768,8 @@
                 const dAC = Math.sqrt(tx * tx + (tz + 2.0) ** 2);
                 T -= (state.acCapacity / 3500) * 1.5 * Math.exp(-dAC * dAC / 3.0);
             }
+            // Vertical stratification: +0.3 °C per metre of height (warm air rises)
+            T += ty * 0.3;
             return Math.round(T * 10) / 10;
         }
 
@@ -757,43 +784,52 @@
             return Math.min(100, Math.round(RH * 10) / 10);
         }
 
-        // Returns air velocity estimate at Three.js coords (tx, tz)
-        // Simple fan-driven flow + buoyancy perturbations, accurate to 1 decimal place
-        function computeLocalVelocity(tx, tz) {
-            const vFan = (state.fanRpm / 2000) * 1.2; // max 1.2 m/s at 2000 RPM
-            // Fan on left wall (-3, y, 0) blows air rightward (+X)
-            // Flow decays from left to right
+        // Returns air velocity at Three.js coords (tx, ty, tz) with vertical component
+        function computeLocalVelocity(tx, ty, tz) {
+            const vFan = (state.fanRpm / 2000) * 1.2;
+            // Fan on left wall blows rightward; flow decays across the room
             let vx = vFan * (1 - Math.max(0, tx + 3) / 6.0) * 0.8 + 0.1;
             let vz = 0;
-            // Buoyancy: warm air spreads radially away from person at floor level
+            let vy = 0;
+            // Horizontal buoyancy + vertical upwash near people
             for (let i = 0; i < state.peopleCount; i++) {
                 const p = getPersonRoomPos(i);
-                const dist = Math.max(0.1, Math.sqrt((tx - p.x) ** 2 + (tz - p.z) ** 2));
-                if (dist < 1.5) {
-                    vx += 0.1 * (tx - p.x) / dist * Math.exp(-dist * dist / 0.5);
-                    vz += 0.1 * (tz - p.z) / dist * Math.exp(-dist * dist / 0.5);
+                const distXZ = Math.max(0.1, Math.sqrt((tx - p.x) ** 2 + (tz - p.z) ** 2));
+                if (distXZ < 1.5) {
+                    const w = Math.exp(-distXZ * distXZ / 0.5);
+                    vx += 0.1 * (tx - p.x) / distXZ * w;
+                    vz += 0.1 * (tz - p.z) / distXZ * w;
                 }
+                // Upward buoyancy plume above person (peak near chest height ~1 m)
+                const dXZ2 = (tx - p.x) ** 2 + (tz - p.z) ** 2;
+                vy += 0.15 * Math.exp(-dXZ2 / 0.3) * Math.exp(-((ty - 1.0) ** 2) / 1.5);
             }
-            // AC cold supply: creates outward flow from back wall
+            // AC cold supply: outward flow in XZ + cold air sinks (negative vy near ceiling)
             if (state.acState) {
                 const dAC = Math.max(0.1, Math.sqrt(tx * tx + (tz + 2.0) ** 2));
                 if (dAC < 2.5) {
                     const fAC = (state.acCapacity / 3500) * 0.4 * Math.exp(-dAC * dAC / 2.5);
                     vz += fAC * (tz + 2.0) / dAC;
                 }
+                // Cold air descends near AC (back wall, high)
+                const dACXZ = Math.sqrt(tx * tx + (tz + 2.0) ** 2);
+                vy -= (state.acCapacity / 3500) * 0.1 * Math.exp(-dACXZ * dACXZ / 2.0)
+                      * Math.exp(-((ty - 2.5) ** 2) / 1.0);
             }
-            const vmag = Math.sqrt(vx * vx + vz * vz);
-            return { vx: vx.toFixed(1), vz: vz.toFixed(1), vmag: vmag.toFixed(1) };
+            const vmag = Math.sqrt(vx * vx + vy * vy + vz * vz);
+            return { vx: vx.toFixed(1), vy: vy.toFixed(1), vz: vz.toFixed(1), vmag: vmag.toFixed(1) };
         }
 
         // --- POINT PROBE ---
-        function probePoint(ux, uz) {
+        function probePoint(ux, uy, uz) {
             const { x, z } = userToRoom(ux, uz);
-            const localT  = computeLocalTemp(x, z);
+            const ty = uy; // y in Three.js scene = height in metres
+            const localT  = computeLocalTemp(x, ty, z);
             const localRH = computeLocalHumidity(x, z);
             const ps  = computePsychrometrics(localT, localRH);
-            const vel = computeLocalVelocity(x, z);
+            const vel = computeLocalVelocity(x, ty, z);
             document.getElementById('probeResX').innerText = ux.toFixed(1);
+            document.getElementById('probeResY').innerText = uy.toFixed(1);
             document.getElementById('probeResZ').innerText = uz.toFixed(1);
             document.getElementById('prT').innerText    = localT.toFixed(1) + ' °C';
             document.getElementById('prRH').innerText   = localRH.toFixed(1) + ' %';
@@ -806,8 +842,13 @@
             document.getElementById('prRho').innerText  = ps.rho + ' kg/m³';
             document.getElementById('prCo2').innerText  = Math.round(state.co2) + ' ppm';
             document.getElementById('prO2').innerText   = state.o2.toFixed(1) + ' %';
-            document.getElementById('prVel').innerText  = vel.vx + ', ' + vel.vz + ', ' + vel.vmag + ' m/s';
+            document.getElementById('prVel').innerText  = vel.vx + ', ' + vel.vy + ', ' + vel.vz + ', ' + vel.vmag + ' m/s';
             document.getElementById('probeResults').classList.remove('hidden');
+            // Show probe marker in 3D scene
+            if (probeMarker) {
+                probeMarker.position.set(x, ty, z);
+                probeMarker.visible = true;
+            }
         }
 
         // --- THREE.JS SCENE SETUP ---
@@ -818,6 +859,9 @@
         let ledLight1, ledLight2, ledMesh1, ledMesh2;
         let peopleAvatars = [];
         let pcDesks = [];
+        let doorPivotGroup = null;
+        let originMarker = null;
+        let probeMarker = null;
 
         const ROOM_DIM = { width: 6, height: 3.2, depth: 5 }; // Room dimensions
 
@@ -862,6 +906,20 @@
 
             // Build Room Structure
             buildRoom();
+
+            // Origin marker — red sphere at user-space (0,0,0) = scene (-3, 0, 2.5)
+            const originGeo = new THREE.SphereGeometry(0.08, 16, 16);
+            const originMatM = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+            originMarker = new THREE.Mesh(originGeo, originMatM);
+            originMarker.position.set(-3, 0.08, 2.5);
+            scene.add(originMarker);
+
+            // Probe marker — cyan sphere, hidden until first probe
+            const probeGeo = new THREE.SphereGeometry(0.08, 16, 16);
+            const probeMatM = new THREE.MeshBasicMaterial({ color: 0x00e5ff });
+            probeMarker = new THREE.Mesh(probeGeo, probeMatM);
+            probeMarker.visible = false;
+            scene.add(probeMarker);
 
             // Set initial camera view
             setCameraView(state.viewMode);
@@ -914,11 +972,54 @@
             walls.back.position.set(0, ROOM_DIM.height / 2, -ROOM_DIM.depth / 2);
             roomGroup.add(walls.back);
 
-            // Front Wall (+Z)
-            walls.front = new THREE.Mesh(backGeo, wallMaterial.clone());
-            walls.front.position.set(0, ROOM_DIM.height / 2, ROOM_DIM.depth / 2);
-            walls.front.rotation.y = Math.PI;
-            roomGroup.add(walls.front);
+            // Front Wall (+Z) — split into 3 panels to leave door opening
+            // Door: 1 m wide × 2.2 m tall, centred at x = 0
+            const doorW = 1.0, doorH = 2.2;
+            const sideW = (ROOM_DIM.width - doorW) / 2; // 2.5 m each
+            const topH  = ROOM_DIM.height - doorH;       // 1.0 m
+
+            const fSideMat = wallMaterial.clone();
+            const fTopMat  = wallMaterial.clone();
+
+            walls.frontLeft = new THREE.Mesh(
+                new THREE.PlaneGeometry(sideW, ROOM_DIM.height), fSideMat.clone());
+            walls.frontLeft.position.set(-(doorW / 2 + sideW / 2), ROOM_DIM.height / 2, ROOM_DIM.depth / 2);
+            walls.frontLeft.rotation.y = Math.PI;
+            roomGroup.add(walls.frontLeft);
+
+            walls.frontRight = new THREE.Mesh(
+                new THREE.PlaneGeometry(sideW, ROOM_DIM.height), fSideMat.clone());
+            walls.frontRight.position.set(doorW / 2 + sideW / 2, ROOM_DIM.height / 2, ROOM_DIM.depth / 2);
+            walls.frontRight.rotation.y = Math.PI;
+            roomGroup.add(walls.frontRight);
+
+            walls.frontTop = new THREE.Mesh(
+                new THREE.PlaneGeometry(doorW, topH), fTopMat.clone());
+            walls.frontTop.position.set(0, doorH + topH / 2, ROOM_DIM.depth / 2);
+            walls.frontTop.rotation.y = Math.PI;
+            roomGroup.add(walls.frontTop);
+
+            // Door panel — pivots at left hinge (x = -0.5, z = 2.5)
+            doorPivotGroup = new THREE.Group();
+            doorPivotGroup.position.set(-doorW / 2, 0, ROOM_DIM.depth / 2);
+            const doorGeo = new THREE.BoxGeometry(doorW, doorH, 0.05);
+            const doorMat = new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.7, side: THREE.DoubleSide });
+            const doorMesh = new THREE.Mesh(doorGeo, doorMat);
+            doorMesh.position.set(doorW / 2, doorH / 2, 0); // right half of pivot
+            doorMesh.castShadow = true;
+            doorPivotGroup.add(doorMesh);
+            // Door frame border (thin strips)
+            const frameMat = new THREE.MeshStandardMaterial({ color: 0x5a3010, roughness: 0.5 });
+            [[-0.01, doorH / 2, 0, 0.06, doorH, 0.08],   // left stile
+             [doorW + 0.01, doorH / 2, 0, 0.06, doorH, 0.08],  // right stile
+             [doorW / 2, doorH + 0.03, 0, doorW + 0.12, 0.06, 0.08], // top rail
+             [doorW / 2, 0.03, 0, doorW + 0.12, 0.06, 0.08]           // bottom sill
+            ].forEach(([fx, fy, fz, fw, fh, fd]) => {
+                const f = new THREE.Mesh(new THREE.BoxGeometry(fw, fh, fd), frameMat);
+                f.position.set(fx, fy, fz);
+                doorPivotGroup.add(f);
+            });
+            roomGroup.add(doorPivotGroup);
 
             // Left Wall (-X)
             walls.left = new THREE.Mesh(sideGeo, wallMaterial.clone());
@@ -1180,7 +1281,7 @@
                 badge.className = "text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-900/50 text-blue-300 border border-blue-500/30 uppercase tracking-wider";
                 toggleText.innerText = "Step Outside";
 
-                // In Inside View, all 4 solid walls stay 100% visible
+                // In Inside View, all walls stay 100% visible
                 Object.values(walls).forEach(w => {
                     w.material.opacity = 1.0;
                     w.visible = true;
@@ -1210,18 +1311,18 @@
             });
 
             // Dynamically fade out the wall closest to camera azimuth
-            // Front (+Z): angle around 0
-            // Right (+X): angle around PI/2
-            // Back (-Z): angle around PI or -PI
-            // Left (-X): angle around -PI/2
+            // Front (+Z): angle around 0  |  Right (+X): ~PI/2
+            // Back (-Z): ~PI or -PI       |  Left (-X): ~-PI/2
             if (angle > -Math.PI / 4 && angle <= Math.PI / 4) {
-                walls.front.material.opacity = 0.1; // Front wall disappears
+                walls.frontLeft.material.opacity = 0.1;
+                walls.frontRight.material.opacity = 0.1;
+                walls.frontTop.material.opacity = 0.1;
             } else if (angle > Math.PI / 4 && angle <= (3 * Math.PI) / 4) {
-                walls.right.material.opacity = 0.1; // Right wall disappears
+                walls.right.material.opacity = 0.1;
             } else if (angle > (3 * Math.PI) / 4 || angle <= (-3 * Math.PI) / 4) {
-                walls.back.material.opacity = 0.1; // Back wall disappears
+                walls.back.material.opacity = 0.1;
             } else {
-                walls.left.material.opacity = 0.1; // Left wall disappears
+                walls.left.material.opacity = 0.1;
             }
         }
 
@@ -1240,17 +1341,21 @@
             const simDt = dt * state.simSpeed;
             state.elapsedSeconds += simDt;
 
+            // Door exchange factor (0 = closed, 1 = fully open 90°)
+            const doorFactor = state.doorAngle / 90.0;
+            const doorExRate = doorFactor * 0.12; // effective ACH-equivalent exchange rate
+
             // 1. CO2 Calculation (ppm)
             const co2GenRate = state.peopleCount * 0.015;
             const fanVentilationRate = (state.fanRpm / 2000) * 0.08 + (state.infiltrationACH * 0.005);
             const co2Target = 400.0;
-            state.co2 += (co2GenRate - (state.co2 - co2Target) * fanVentilationRate) * (simDt / 10);
+            state.co2 += (co2GenRate - (state.co2 - co2Target) * (fanVentilationRate + doorExRate)) * (simDt / 10);
             state.co2 = Math.max(400, Math.min(2500, state.co2));
 
             // 2. O2 Calculation (%) — independent of CO2; consumption-based model
-            // Each person consumes ~0.0125 %/10s; fan + infiltration replenish from outdoor 20.95 %
+            // Each person consumes ~0.0125 %/10s; fan + infiltration + door replenish from outdoor 20.95 %
             const o2ConsumptionRate = state.peopleCount * 0.0125;
-            const ventRate = (state.fanRpm / 2000) * 0.07 + (state.infiltrationACH * 0.004);
+            const ventRate = (state.fanRpm / 2000) * 0.07 + (state.infiltrationACH * 0.004) + doorExRate * 0.9;
             state.o2 += (-o2ConsumptionRate + (20.95 - state.o2) * ventRate) * (simDt / 10);
             state.o2 = Math.max(18.0, Math.min(20.95, state.o2));
 
@@ -1270,8 +1375,9 @@
             const netHeatRate = (totalHeatWatts - coolingPower) * 0.00008;
 
             const wallHeatTransfer = (state.extTemp - state.temp) * (state.wallPermeability * 0.01);
+            const doorHeatTransfer = (state.extTemp - state.temp) * doorFactor * 0.08;
 
-            state.temp += (netHeatRate + wallHeatTransfer) * (simDt / 20);
+            state.temp += (netHeatRate + wallHeatTransfer + doorHeatTransfer) * (simDt / 20);
             state.temp = Math.max(15, Math.min(45, state.temp));
 
             // Fan Auto Mode adjustments
@@ -1288,7 +1394,7 @@
             // 4. Humidity Calculation (%)
             const humGen = state.peopleCount * 0.02;
             const acDehum = state.acState ? 0.08 : 0;
-            const extHumDiff = (state.extHumidity - state.humidity) * 0.01;
+            const extHumDiff = (state.extHumidity - state.humidity) * (0.01 + doorFactor * 0.06);
             state.humidity += (humGen - acDehum + extHumDiff) * (simDt / 10);
             state.humidity = Math.max(0, Math.min(100, state.humidity));
 
@@ -1335,6 +1441,11 @@
         }
 
         function update3DVisuals() {
+            // Door rotation — swings inward (into room, -Z direction)
+            if (doorPivotGroup) {
+                doorPivotGroup.rotation.y = -(state.doorAngle * Math.PI / 180);
+            }
+
             // Fan Rotation
             if (fanBladesMesh && state.fanRpm > 0) {
                 fanBladesMesh.rotation.z += (state.fanRpm / 60) * 0.05;
@@ -1767,13 +1878,37 @@
             document.getElementById('sliderProbeX').addEventListener('input', e => {
                 document.getElementById('valProbeX').innerText = parseFloat(e.target.value).toFixed(1);
             });
+            document.getElementById('sliderProbeY').addEventListener('input', e => {
+                document.getElementById('valProbeY').innerText = parseFloat(e.target.value).toFixed(1);
+            });
             document.getElementById('sliderProbeZ').addEventListener('input', e => {
                 document.getElementById('valProbeZ').innerText = parseFloat(e.target.value).toFixed(1);
             });
             document.getElementById('probeBtn').addEventListener('click', () => {
                 const ux = parseFloat(document.getElementById('sliderProbeX').value);
+                const uy = parseFloat(document.getElementById('sliderProbeY').value);
                 const uz = parseFloat(document.getElementById('sliderProbeZ').value);
-                probePoint(ux, uz);
+                probePoint(ux, uy, uz);
+            });
+
+            // Door controls
+            document.getElementById('toggleDoorBtn').addEventListener('click', () => {
+                const targetAngle = state.doorAngle > 0 ? 0 : 85;
+                state.doorAngle = targetAngle;
+                document.getElementById('sliderDoorAngle').value = targetAngle;
+                document.getElementById('valDoorAngle').innerText = targetAngle + '°';
+                const isOpen = targetAngle > 0;
+                document.getElementById('doorBtnIcon').className = isOpen ? 'fa-solid fa-door-open' : 'fa-solid fa-door-closed';
+                document.getElementById('doorBtnText').innerText = isOpen ? 'Close Door' : 'Open Door';
+                update3DVisuals();
+            });
+            document.getElementById('sliderDoorAngle').addEventListener('input', e => {
+                state.doorAngle = parseFloat(e.target.value);
+                document.getElementById('valDoorAngle').innerText = Math.round(state.doorAngle) + '°';
+                const isOpen = state.doorAngle > 5;
+                document.getElementById('doorBtnIcon').className = isOpen ? 'fa-solid fa-door-open' : 'fa-solid fa-door-closed';
+                document.getElementById('doorBtnText').innerText = isOpen ? 'Close Door' : 'Open Door';
+                update3DVisuals();
             });
         }
 
