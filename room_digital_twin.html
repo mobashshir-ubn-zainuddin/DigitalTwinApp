@@ -317,71 +317,13 @@
             </div>
         </div>
 
-        <!-- Place Objects Section -->
-        <div class="space-y-2 pt-2 border-t border-slate-800">
-            <div class="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
-                <i class="fa-solid fa-cube"></i> Place Objects
-            </div>
-
-            <!-- Coordinate inputs (room corner 0,0 = front-left) -->
-            <div class="bg-slate-900/60 rounded-xl p-2 space-y-1.5 border border-slate-700/40">
-                <div class="text-[10px] text-slate-500 uppercase font-semibold">Position (m) — corner origin (0,0)</div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="space-y-0.5">
-                        <div class="flex justify-between text-[10px] text-slate-400"><span>X (0–6)</span><span id="valPlaceX" class="text-purple-300 font-semibold">3.0</span></div>
-                        <input type="range" id="sliderPlaceX" min="0" max="6" step="0.1" value="3.0">
-                    </div>
-                    <div class="space-y-0.5">
-                        <div class="flex justify-between text-[10px] text-slate-400"><span>Z (0–5)</span><span id="valPlaceZ" class="text-purple-300 font-semibold">2.5</span></div>
-                        <input type="range" id="sliderPlaceZ" min="0" max="5" step="0.1" value="2.5">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Box size inputs -->
-            <div class="bg-slate-900/60 rounded-xl p-2 space-y-1.5 border border-slate-700/40">
-                <div class="text-[10px] text-slate-500 uppercase font-semibold">Box Size (m)</div>
-                <div class="grid grid-cols-3 gap-1.5">
-                    <div class="space-y-0.5">
-                        <div class="flex justify-between text-[10px] text-slate-400"><span>W</span><span id="valBoxW" class="text-purple-300 font-semibold">0.5</span></div>
-                        <input type="range" id="sliderBoxW" min="0.2" max="2.0" step="0.1" value="0.5">
-                    </div>
-                    <div class="space-y-0.5">
-                        <div class="flex justify-between text-[10px] text-slate-400"><span>H</span><span id="valBoxH" class="text-purple-300 font-semibold">0.75</span></div>
-                        <input type="range" id="sliderBoxH" min="0.2" max="2.0" step="0.05" value="0.75">
-                    </div>
-                    <div class="space-y-0.5">
-                        <div class="flex justify-between text-[10px] text-slate-400"><span>D</span><span id="valBoxD" class="text-purple-300 font-semibold">0.5</span></div>
-                        <input type="range" id="sliderBoxD" min="0.2" max="2.0" step="0.1" value="0.5">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action buttons -->
-            <div class="grid grid-cols-2 gap-1.5">
-                <button id="addPersonBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-purple-600/40 text-purple-300 bg-purple-950/40 hover:bg-purple-900/50 transition flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-person"></i> Add Person
-                </button>
-                <button id="removeModePersonBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-slate-600/60 text-slate-300 bg-slate-800/60 hover:bg-slate-700 transition flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-person-walking-arrow-right"></i> Remove
-                </button>
-                <button id="addBoxBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-purple-600/40 text-purple-300 bg-purple-950/40 hover:bg-purple-900/50 transition flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-box"></i> Add Box
-                </button>
-                <button id="removeBoxBtn" class="py-1.5 px-2 rounded-lg text-xs font-medium border border-slate-600/60 text-slate-300 bg-slate-800/60 hover:bg-slate-700 transition flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-trash-can"></i> Remove Box
-                </button>
-            </div>
-
-            <!-- Click-to-place toggle -->
-            <div class="grid grid-cols-2 gap-1.5">
-                <button id="placeModePersonBtn" class="py-1 px-2 rounded-lg text-[10px] font-medium border border-indigo-600/30 text-indigo-300 bg-indigo-950/30 hover:bg-indigo-900/40 transition flex items-center justify-center gap-1">
-                    <i class="fa-solid fa-crosshairs"></i> Click-Place Person
-                </button>
-                <button id="placeModeBoxBtn" class="py-1 px-2 rounded-lg text-[10px] font-medium border border-indigo-600/30 text-indigo-300 bg-indigo-950/30 hover:bg-indigo-900/40 transition flex items-center justify-center gap-1">
-                    <i class="fa-solid fa-crosshairs"></i> Click-Place Box
-                </button>
-            </div>
+        <!-- Layout Editor trigger (opens popup) -->
+        <div class="pt-2 border-t border-slate-800">
+            <button id="openLayoutEditorBtn" class="w-full py-2 rounded-xl text-xs font-bold uppercase tracking-wider border border-purple-500/40 text-purple-300 bg-purple-950/40 hover:bg-purple-900/50 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-drafting-compass"></i> Layout Editor
+            </button>
+            <p class="text-[10px] text-slate-500 text-center mt-1">Room size, furniture, people &amp; objects</p>
+        </div>
 
             <!-- Door Controls -->
             <div class="space-y-1.5 pt-2 border-t border-slate-800">
@@ -395,8 +337,8 @@
                     </button>
                     <div class="space-y-0.5">
                         <div class="flex justify-between text-[10px] text-slate-400">
-                            <span>Door Angle (0°–90°)</span>
-                            <span id="valDoorAngle" class="text-orange-300 font-semibold">0°</span>
+                            <span>Opening (0–100%)</span>
+                            <span id="valDoorAngle" class="text-orange-300 font-semibold">0%</span>
                         </div>
                         <input type="range" id="sliderDoorAngle" min="0" max="90" step="1" value="0">
                     </div>
@@ -463,6 +405,160 @@
     </aside>
 
     <!-- Bottom Telemetry & Sparkline Dashboard Bar -->
+    <!-- ==================== LAYOUT EDITOR MODAL ==================== -->
+    <div id="layoutModal" class="fixed inset-0 z-[200] hidden" style="background:rgba(0,0,0,0.78)">
+        <div class="flex items-center justify-center h-full p-4">
+            <div class="bg-slate-900 border border-slate-600/70 rounded-2xl w-full max-w-xl flex flex-col shadow-2xl" style="max-height:88vh">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between px-5 py-3 border-b border-slate-700 flex-shrink-0">
+                    <div class="flex items-center gap-2 text-sm font-bold text-purple-300">
+                        <i class="fa-solid fa-drafting-compass"></i> Layout Editor
+                    </div>
+                    <button id="closeLayoutModal" class="text-slate-400 hover:text-white text-lg leading-none">&times;</button>
+                </div>
+                <!-- Tabs -->
+                <div class="flex border-b border-slate-700 px-4 flex-shrink-0 gap-1">
+                    <button class="layout-tab-btn active-tab px-3 py-2 text-xs font-semibold uppercase tracking-wider" data-ltab="room">Room</button>
+                    <button class="layout-tab-btn px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-400" data-ltab="furniture">Furniture</button>
+                    <button class="layout-tab-btn px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-400" data-ltab="people">People</button>
+                    <button class="layout-tab-btn px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-400" data-ltab="objects">Objects</button>
+                </div>
+                <!-- Tab content -->
+                <div class="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+
+                    <!-- ROOM tab -->
+                    <div id="ltab-room" class="ltab-content space-y-4">
+                        <p class="text-[11px] text-slate-400 leading-relaxed">Change room dimensions and click <strong class="text-white">Apply Room Size</strong>. The scene will rebuild.</p>
+                        <div class="space-y-3">
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs text-slate-300"><span>Width (X)</span><span id="valRoomW" class="text-purple-300 font-semibold">6.0 m</span></div>
+                                <input type="range" id="sliderRoomW" min="4" max="12" step="0.5" value="6.0">
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs text-slate-300"><span>Height (Y)</span><span id="valRoomH" class="text-purple-300 font-semibold">3.2 m</span></div>
+                                <input type="range" id="sliderRoomH" min="2.5" max="5" step="0.1" value="3.2">
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs text-slate-300"><span>Depth (Z)</span><span id="valRoomD" class="text-purple-300 font-semibold">5.0 m</span></div>
+                                <input type="range" id="sliderRoomD" min="4" max="10" step="0.5" value="5.0">
+                            </div>
+                        </div>
+                        <button id="applyRoomSizeBtn" class="w-full py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-900 bg-purple-400 hover:bg-purple-300 transition">Apply Room Size</button>
+                    </div>
+
+                    <!-- FURNITURE tab -->
+                    <div id="ltab-furniture" class="ltab-content hidden space-y-4">
+                        <p class="text-[11px] text-slate-400">Move furniture instantly — no rebuild required.</p>
+                        <!-- Sofa -->
+                        <div class="space-y-2">
+                            <div class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Sofa</div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[10px] text-slate-400"><span>X (scene −3–3)</span><span id="valSofaX" class="text-teal-300 font-semibold">2.35</span></div>
+                                    <input type="range" id="sliderSofaX" min="-2.5" max="2.5" step="0.05" value="2.35">
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[10px] text-slate-400"><span>Z (scene −2.5–2.5)</span><span id="valSofaZ" class="text-teal-300 font-semibold">0.0</span></div>
+                                    <input type="range" id="sliderSofaZ" min="-2" max="2" step="0.05" value="0.0">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Desks -->
+                        <div class="space-y-2">
+                            <div class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Workstation Desks</div>
+                            <div class="space-y-2">
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[10px] text-slate-400"><span>Desk 1 — X</span><span id="valDesk1X" class="text-teal-300 font-semibold">−1.6</span></div>
+                                    <input type="range" id="sliderDesk1X" min="-2.5" max="2.5" step="0.1" value="-1.6">
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[10px] text-slate-400"><span>Desk 2 — X</span><span id="valDesk2X" class="text-teal-300 font-semibold">0.0</span></div>
+                                    <input type="range" id="sliderDesk2X" min="-2.5" max="2.5" step="0.1" value="0.0">
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[10px] text-slate-400"><span>Desk 3 — X</span><span id="valDesk3X" class="text-teal-300 font-semibold">1.6</span></div>
+                                    <input type="range" id="sliderDesk3X" min="-2.5" max="2.5" step="0.1" value="1.6">
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[10px] text-slate-400"><span>All Desks — Z (depth)</span><span id="valDeskZ" class="text-teal-300 font-semibold">−1.9</span></div>
+                                    <input type="range" id="sliderDeskZ" min="-2.4" max="2.0" step="0.1" value="-1.9">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PEOPLE tab -->
+                    <div id="ltab-people" class="ltab-content hidden space-y-3">
+                        <p class="text-[11px] text-slate-400">Place a person at the given room coordinates, or click on the floor in the 3D view.</p>
+                        <div class="bg-slate-800/60 rounded-xl p-3 space-y-2 border border-slate-700/40">
+                            <div class="text-[10px] text-slate-500 uppercase font-semibold">Position (m) — room corner origin (0,0)</div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="space-y-0.5">
+                                    <div class="flex justify-between text-[10px] text-slate-400"><span>X (0–W)</span><span id="valPlaceX" class="text-purple-300 font-semibold">3.0</span></div>
+                                    <input type="range" id="sliderPlaceX" min="0" max="6" step="0.1" value="3.0">
+                                </div>
+                                <div class="space-y-0.5">
+                                    <div class="flex justify-between text-[10px] text-slate-400"><span>Z (0–D)</span><span id="valPlaceZ" class="text-purple-300 font-semibold">2.5</span></div>
+                                    <input type="range" id="sliderPlaceZ" min="0" max="5" step="0.1" value="2.5">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="addPersonBtn" class="py-2 rounded-lg text-xs font-medium border border-purple-600/40 text-purple-300 bg-purple-950/40 hover:bg-purple-900/50 transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-person"></i> Add Person
+                            </button>
+                            <button id="removeModePersonBtn" class="py-2 rounded-lg text-xs font-medium border border-slate-600/60 text-slate-300 bg-slate-800/60 hover:bg-slate-700 transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-person-walking-arrow-right"></i> Remove Last
+                            </button>
+                            <button id="placeModePersonBtn" class="col-span-2 py-2 rounded-lg text-xs font-medium border border-indigo-600/30 text-indigo-300 bg-indigo-950/30 hover:bg-indigo-900/40 transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-crosshairs"></i> Click-to-Place Person
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- OBJECTS tab -->
+                    <div id="ltab-objects" class="ltab-content hidden space-y-3">
+                        <p class="text-[11px] text-slate-400">Add custom boxes (product blocks, equipment, etc.).</p>
+                        <div class="bg-slate-800/60 rounded-xl p-3 space-y-2 border border-slate-700/40">
+                            <div class="text-[10px] text-slate-500 uppercase font-semibold">Box Size (m)</div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="space-y-0.5">
+                                    <div class="flex justify-between text-[10px] text-slate-400"><span>W</span><span id="valBoxW" class="text-purple-300 font-semibold">0.5</span></div>
+                                    <input type="range" id="sliderBoxW" min="0.2" max="2.0" step="0.1" value="0.5">
+                                </div>
+                                <div class="space-y-0.5">
+                                    <div class="flex justify-between text-[10px] text-slate-400"><span>H</span><span id="valBoxH" class="text-purple-300 font-semibold">0.75</span></div>
+                                    <input type="range" id="sliderBoxH" min="0.2" max="2.0" step="0.05" value="0.75">
+                                </div>
+                                <div class="space-y-0.5">
+                                    <div class="flex justify-between text-[10px] text-slate-400"><span>D</span><span id="valBoxD" class="text-purple-300 font-semibold">0.5</span></div>
+                                    <input type="range" id="sliderBoxD" min="0.2" max="2.0" step="0.1" value="0.5">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="addBoxBtn" class="py-2 rounded-lg text-xs font-medium border border-purple-600/40 text-purple-300 bg-purple-950/40 hover:bg-purple-900/50 transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-box"></i> Add Box
+                            </button>
+                            <button id="removeBoxBtn" class="py-2 rounded-lg text-xs font-medium border border-slate-600/60 text-slate-300 bg-slate-800/60 hover:bg-slate-700 transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-trash-can"></i> Remove Last
+                            </button>
+                            <button id="placeModeBoxBtn" class="col-span-2 py-2 rounded-lg text-xs font-medium border border-indigo-600/30 text-indigo-300 bg-indigo-950/30 hover:bg-indigo-900/40 transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-crosshairs"></i> Click-to-Place Box
+                            </button>
+                        </div>
+                    </div>
+
+                </div><!-- end tab content -->
+            </div>
+        </div>
+    </div>
+    <style>
+        .layout-tab-btn { border-bottom: 2px solid transparent; }
+        .active-tab { border-bottom-color: #a855f7; color: #d8b4fe; }
+    </style>
+    <!-- ==================== END LAYOUT EDITOR MODAL ==================== -->
+
     <footer class="w-full z-20 px-5 pb-3">
         <div class="glass-panel rounded-2xl p-3 flex flex-col gap-2 max-w-7xl mx-auto border border-slate-800/80">
             
@@ -623,6 +719,12 @@
             peopleCount: 0,
             doorAngle: 0,
             simSpeed: 108,
+
+            // Room dimensions (editable via Layout Editor)
+            roomWidth: 6.0, roomHeight: 3.2, roomDepth: 5.0,
+            // Furniture positions (scene coords)
+            sofaSceneX: 2.35, sofaSceneZ: 0.0,
+            deskXPositions: [-1.6, 0.0, 1.6], deskSceneZ: -1.9,
 
             // Dynamic Environmental Telemetry (starts at initial conditions)
             temp: 29.3,
@@ -859,11 +961,17 @@
         let ledLight1, ledLight2, ledMesh1, ledMesh2;
         let peopleAvatars = [];
         let pcDesks = [];
+        let sofaGroup = null;
         let doorPivotGroup = null;
         let originMarker = null;
         let probeMarker = null;
 
-        const ROOM_DIM = { width: 6, height: 3.2, depth: 5 }; // Room dimensions
+        // ROOM_DIM is reactive — reads from state so it always reflects the current room size
+        const ROOM_DIM = {
+            get width()  { return state.roomWidth; },
+            get height() { return state.roomHeight; },
+            get depth()  { return state.roomDepth; }
+        };
 
         function init3D() {
             const container = document.getElementById('canvas-container');
@@ -907,11 +1015,11 @@
             // Build Room Structure
             buildRoom();
 
-            // Origin marker — red sphere at user-space (0,0,0) = scene (-3, 0, 2.5)
+            // Origin marker — red sphere at user-space (0,0,0) = scene (-W/2, 0, D/2)
             const originGeo = new THREE.SphereGeometry(0.08, 16, 16);
             const originMatM = new THREE.MeshBasicMaterial({ color: 0xff3333 });
             originMarker = new THREE.Mesh(originGeo, originMatM);
-            originMarker.position.set(-3, 0.08, 2.5);
+            originMarker.position.set(-state.roomWidth / 2, 0.08, state.roomDepth / 2);
             scene.add(originMarker);
 
             // Probe marker — cyan sphere, hidden until first probe
@@ -1008,15 +1116,16 @@
             doorPanelMesh.position.set(0, doorH / 2, 0); // centred over opening
             doorPanelMesh.castShadow = true;
             doorPivotGroup.add(doorPanelMesh);
-            // Static door frame (stays fixed, only the panel slides)
+            // Static door frame on the front wall (stays fixed, only the panel slides)
             const frameMat = new THREE.MeshStandardMaterial({ color: 0x5a3010, roughness: 0.5 });
-            [[-doorW / 2 - 0.03, doorH / 2, 0, 0.06, doorH + 0.06, 0.08],  // left jamb
-             [ doorW / 2 + 0.03, doorH / 2, 0, 0.06, doorH + 0.06, 0.08],  // right jamb
-             [0, doorH + 0.03, 0, doorW + 0.12, 0.06, 0.08]                 // top header
-            ].forEach(([fx, fy, fz, fw, fh, fd]) => {
+            const fz = ROOM_DIM.depth / 2;  // front wall z-position
+            [[-doorW / 2 - 0.03, doorH / 2, 0.06, doorH + 0.06, 0.08],  // left jamb
+             [ doorW / 2 + 0.03, doorH / 2, 0.06, doorH + 0.06, 0.08],  // right jamb
+             [0, doorH + 0.03, doorW + 0.12, 0.06, 0.08]                 // top header
+            ].forEach(([fx, fy, fw, fh, fd]) => {
                 const f = new THREE.Mesh(new THREE.BoxGeometry(fw, fh, fd), frameMat);
                 f.position.set(fx, fy, fz);
-                roomGroup.add(f); // frame is fixed to room, not to sliding group
+                roomGroup.add(f);
             });
             roomGroup.add(doorPivotGroup);
 
@@ -1094,15 +1203,13 @@
             roomGroup.add(fanGroup);
 
             // --- FURNITURE LAYOUT ---
-            // 1. Computer Workstations grouped along the back wall (-Z)
-            const deskSpacing = 1.6;
-            const startX = -1.6;
-            for (let i = 0; i < 3; i++) {
-                createPcDesk(startX + i * deskSpacing, 0, -ROOM_DIM.depth / 2 + 0.6, 0);
-            }
+            // 1. Computer Workstations (positions from state)
+            state.deskXPositions.forEach(dx => {
+                createPcDesk(dx, 0, state.deskSceneZ, 0);
+            });
 
-            // 2. Comfortable Long Sofa along the right side wall (+X)
-            createSofa(ROOM_DIM.width / 2 - 0.65, 0, 0, -Math.PI / 2);
+            // 2. Sofa (position from state)
+            createSofa(state.sofaSceneX, 0, state.sofaSceneZ, -Math.PI / 2);
 
             // Initialize People Avatars
             updatePeopleAvatars();
@@ -1188,7 +1295,7 @@
         }
 
         function createSofa(x, y, z, rotY) {
-            const sofaGroup = new THREE.Group();
+            const sofaGroup_local = new THREE.Group();
             const sofaMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 });
 
             // Main Base Seat Cushion
@@ -1196,29 +1303,30 @@
             const base = new THREE.Mesh(baseGeo, sofaMat);
             base.position.y = 0.25;
             base.castShadow = true;
-            sofaGroup.add(base);
+            sofaGroup_local.add(base);
 
             // Backrest
             const backGeo = new THREE.BoxGeometry(2.4, 0.65, 0.25);
             const back = new THREE.Mesh(backGeo, sofaMat);
             back.position.set(0, 0.6, -0.325);
             back.castShadow = true;
-            sofaGroup.add(back);
+            sofaGroup_local.add(back);
 
             // Armrests
             const armGeo = new THREE.BoxGeometry(0.25, 0.45, 0.9);
             const leftArm = new THREE.Mesh(armGeo, sofaMat);
             leftArm.position.set(-1.15, 0.5, 0);
             leftArm.castShadow = true;
-            sofaGroup.add(leftArm);
+            sofaGroup_local.add(leftArm);
 
             const rightArm = new THREE.Mesh(armGeo, sofaMat);
             rightArm.position.set(1.15, 0.5, 0);
             rightArm.castShadow = true;
-            sofaGroup.add(rightArm);
+            sofaGroup_local.add(rightArm);
 
-            sofaGroup.position.set(x, y, z);
-            sofaGroup.rotation.y = rotY;
+            sofaGroup_local.position.set(x, y, z);
+            sofaGroup_local.rotation.y = rotY;
+            sofaGroup = sofaGroup_local;
             roomGroup.add(sofaGroup);
         }
 
@@ -1445,8 +1553,8 @@
                 doorPivotGroup.position.x = -(state.doorAngle / 90) * 1.0;
             }
 
-            // Fan Rotation
-            if (fanBladesMesh && state.fanRpm > 0) {
+            // Fan Rotation — only animates while simulation is running
+            if (fanBladesMesh && state.fanRpm > 0 && state.isRunning) {
                 fanBladesMesh.rotation.z += (state.fanRpm / 60) * 0.05;
             }
 
@@ -1623,9 +1731,30 @@
             document.getElementById('placeModeStatus').classList.add('hidden');
         }
 
-        // Convert user panel coords (ux 0-6, uz 0-5) to Three.js (tx, tz)
+        // Convert user panel coords to Three.js scene coords (uses current room dims)
         function userToRoom(ux, uz) {
-            return { x: ux - 3, z: 2.5 - uz };
+            return { x: ux - state.roomWidth / 2, z: state.roomDepth / 2 - uz };
+        }
+
+        // Fully tear down and rebuild the 3D room (used when room dimensions change)
+        function rebuildRoom() {
+            if (roomGroup) scene.remove(roomGroup);
+            roomGroup = null; walls = {}; sofaGroup = null; doorPivotGroup = null;
+            fanBladesMesh = null; acMesh = null; acLedMesh = null;
+            ledLight1 = null; ledLight2 = null; ledMesh1 = null; ledMesh2 = null;
+            pcDesks = [];
+            peopleAvatars.forEach(av => scene.remove(av)); peopleAvatars = [];
+            placedBoxes.forEach(b => scene.remove(b)); placedBoxes = [];
+            buildRoom();
+            // Reapply door state
+            if (doorPivotGroup) doorPivotGroup.position.x = -(state.doorAngle / 90) * 1.0;
+            // Reposition origin marker
+            if (originMarker) originMarker.position.set(-state.roomWidth / 2, 0.08, state.roomDepth / 2);
+            // Update probe slider ranges to new room size
+            const slPX = document.getElementById('sliderPlaceX');
+            const slPZ = document.getElementById('sliderPlaceZ');
+            if (slPX) { slPX.max = state.roomWidth; }
+            if (slPZ) { slPZ.max = state.roomDepth; }
         }
 
         function addPlacedBox(x, z, w, h, d) {
@@ -1895,19 +2024,97 @@
                 const targetAngle = state.doorAngle > 0 ? 0 : 85;
                 state.doorAngle = targetAngle;
                 document.getElementById('sliderDoorAngle').value = targetAngle;
-                document.getElementById('valDoorAngle').innerText = targetAngle + '°';
+                document.getElementById('valDoorAngle').innerText = Math.round(targetAngle / 90 * 100) + '%';
                 const isOpen = targetAngle > 0;
                 document.getElementById('doorBtnIcon').className = isOpen ? 'fa-solid fa-door-open' : 'fa-solid fa-door-closed';
                 document.getElementById('doorBtnText').innerText = isOpen ? 'Close Door' : 'Open Door';
-                update3DVisuals();
+                if (doorPivotGroup) doorPivotGroup.position.x = -(state.doorAngle / 90) * 1.0;
             });
             document.getElementById('sliderDoorAngle').addEventListener('input', e => {
                 state.doorAngle = parseFloat(e.target.value);
-                document.getElementById('valDoorAngle').innerText = Math.round(state.doorAngle) + '°';
+                document.getElementById('valDoorAngle').innerText = Math.round(state.doorAngle / 90 * 100) + '%';
                 const isOpen = state.doorAngle > 5;
                 document.getElementById('doorBtnIcon').className = isOpen ? 'fa-solid fa-door-open' : 'fa-solid fa-door-closed';
                 document.getElementById('doorBtnText').innerText = isOpen ? 'Close Door' : 'Open Door';
-                update3DVisuals();
+                if (doorPivotGroup) doorPivotGroup.position.x = -(state.doorAngle / 90) * 1.0;
+            });
+
+            // Layout Editor
+            setupLayoutEditor();
+        }
+
+        function setupLayoutEditor() {
+            // Open / close modal
+            document.getElementById('openLayoutEditorBtn').addEventListener('click', () => {
+                document.getElementById('layoutModal').classList.remove('hidden');
+            });
+            document.getElementById('closeLayoutModal').addEventListener('click', () => {
+                document.getElementById('layoutModal').classList.add('hidden');
+            });
+            document.getElementById('layoutModal').addEventListener('click', e => {
+                if (e.target === document.getElementById('layoutModal'))
+                    document.getElementById('layoutModal').classList.add('hidden');
+            });
+
+            // Tab switching
+            document.querySelectorAll('.layout-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.layout-tab-btn').forEach(b => {
+                        b.classList.remove('active-tab');
+                        b.classList.add('text-slate-400');
+                    });
+                    btn.classList.add('active-tab');
+                    btn.classList.remove('text-slate-400');
+                    const tab = btn.dataset.ltab;
+                    document.querySelectorAll('.ltab-content').forEach(t => t.classList.add('hidden'));
+                    document.getElementById('ltab-' + tab).classList.remove('hidden');
+                });
+            });
+
+            // Room size sliders (preview only — apply on button click)
+            document.getElementById('sliderRoomW').addEventListener('input', e => {
+                document.getElementById('valRoomW').innerText = parseFloat(e.target.value).toFixed(1) + ' m';
+            });
+            document.getElementById('sliderRoomH').addEventListener('input', e => {
+                document.getElementById('valRoomH').innerText = parseFloat(e.target.value).toFixed(1) + ' m';
+            });
+            document.getElementById('sliderRoomD').addEventListener('input', e => {
+                document.getElementById('valRoomD').innerText = parseFloat(e.target.value).toFixed(1) + ' m';
+            });
+            document.getElementById('applyRoomSizeBtn').addEventListener('click', () => {
+                state.roomWidth  = parseFloat(document.getElementById('sliderRoomW').value);
+                state.roomHeight = parseFloat(document.getElementById('sliderRoomH').value);
+                state.roomDepth  = parseFloat(document.getElementById('sliderRoomD').value);
+                rebuildRoom();
+                setCameraView(state.viewMode);
+            });
+
+            // Sofa position sliders — live update
+            document.getElementById('sliderSofaX').addEventListener('input', e => {
+                state.sofaSceneX = parseFloat(e.target.value);
+                document.getElementById('valSofaX').innerText = state.sofaSceneX.toFixed(2);
+                if (sofaGroup) sofaGroup.position.x = state.sofaSceneX;
+            });
+            document.getElementById('sliderSofaZ').addEventListener('input', e => {
+                state.sofaSceneZ = parseFloat(e.target.value);
+                document.getElementById('valSofaZ').innerText = state.sofaSceneZ.toFixed(2);
+                if (sofaGroup) sofaGroup.position.z = state.sofaSceneZ;
+            });
+
+            // Desk position sliders — live update
+            const deskSliders = ['sliderDesk1X', 'sliderDesk2X', 'sliderDesk3X'];
+            const deskVals    = ['valDesk1X',    'valDesk2X',    'valDesk3X'];
+            deskSliders.forEach((id, i) => {
+                document.getElementById(id).addEventListener('input', e => {
+                    state.deskXPositions[i] = parseFloat(e.target.value);
+                    document.getElementById(deskVals[i]).innerText = state.deskXPositions[i].toFixed(1);
+                    if (pcDesks[i]) pcDesks[i].position.x = state.deskXPositions[i];
+                });
+            });
+            document.getElementById('sliderDeskZ').addEventListener('input', e => {
+                state.deskSceneZ = parseFloat(e.target.value);
+                document.getElementById('valDeskZ').innerText = state.deskSceneZ.toFixed(1);
+                pcDesks.forEach(d => { if (d) d.position.z = state.deskSceneZ; });
             });
         }
 
