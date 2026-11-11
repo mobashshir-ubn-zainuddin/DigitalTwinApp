@@ -114,6 +114,9 @@
             <button id="toggleParamsBtn" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition-all flex items-center gap-2">
                 <i class="fa-solid fa-sliders"></i> Parameters
             </button>
+            <button id="showResultsBtn" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-violet-700 hover:bg-violet-600 text-white transition-all flex items-center gap-2">
+                <i class="fa-solid fa-chart-area"></i> Results
+            </button>
             <button id="downloadExcelBtn" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white transition-all flex items-center gap-2" title="Download simulation results as Excel">
                 <i class="fa-solid fa-file-excel"></i> Export Excel
             </button>
@@ -206,21 +209,6 @@
                         <input type="range" id="sliderInitHumidity" min="0" max="100" step="1" value="12">
                     </div>
 
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs font-medium text-slate-300">
-                            <span>CO₂</span>
-                            <span id="valInitCo2" class="text-green-400 font-semibold">896 ppm</span>
-                        </div>
-                        <input type="range" id="sliderInitCo2" min="400" max="2500" step="10" value="896">
-                    </div>
-
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs font-medium text-slate-300">
-                            <span>O₂</span>
-                            <span id="valInitO2" class="text-green-400 font-semibold">20.65 %</span>
-                        </div>
-                        <input type="range" id="sliderInitO2" min="18" max="20.95" step="0.05" value="20.65">
-                    </div>
                 </div>
 
                 <div class="text-xs font-bold text-blue-400 uppercase tracking-wider border-b border-slate-700/60 pb-1.5 flex items-center gap-2">
@@ -279,22 +267,6 @@
                         <span id="valCpuUsage" class="text-blue-400 font-semibold">41 %</span>
                     </div>
                     <input type="range" id="sliderCpuUsage" min="5" max="100" step="1" value="41">
-                </div>
-
-                <!-- Exhaust Fan -->
-                <div class="space-y-2 pt-1 border-t border-slate-800">
-                    <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-fan"></i> Exhaust Fan
-                    </div>
-                    <div class="flex justify-between text-xs font-medium text-slate-300">
-                        <span>Fan RPM</span>
-                        <span id="valFanRpm" class="text-blue-400 font-semibold">287 RPM</span>
-                    </div>
-                    <input type="range" id="sliderFanRpm" min="0" max="2000" step="25" value="287">
-
-                    <button id="toggleFanAutoBtn" class="w-full py-1.5 px-3 rounded-lg text-xs font-medium border border-emerald-500/40 text-emerald-300 bg-emerald-950/40 hover:bg-emerald-900/50 transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-robot"></i> <span id="fanAutoText">Fan Auto Mode: ON</span>
-                    </button>
                 </div>
 
                 <!-- Occupancy -->
@@ -375,8 +347,9 @@
                     <div class="flex justify-between"><span class="text-slate-400">Hum. Ratio</span><span id="prOmega" class="text-white font-mono">-</span></div>
                     <div class="flex justify-between"><span class="text-slate-400">Enthalpy</span><span id="prH" class="text-white font-mono">-</span></div>
                     <div class="flex justify-between"><span class="text-slate-400">Air Density</span><span id="prRho" class="text-white font-mono">-</span></div>
-                    <div class="flex justify-between"><span class="text-slate-400">CO₂</span><span id="prCo2" class="text-white font-mono">-</span></div>
-                    <div class="flex justify-between"><span class="text-slate-400">O₂</span><span id="prO2" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Pressure (abs)</span><span id="prP" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Pressure (gauge)</span><span id="prPgauge" class="text-white font-mono">-</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Luminosity</span><span id="prLux" class="text-white font-mono">-</span></div>
                     <div class="flex justify-between col-span-2 border-t border-slate-700/40 pt-0.5 mt-0.5">
                         <span class="text-slate-400">Air Speed (Vx, Vy, Vz, |V|)</span>
                         <span id="prVel" class="text-white font-mono">-</span>
@@ -555,6 +528,40 @@
     </style>
     <!-- ==================== END LAYOUT EDITOR MODAL ==================== -->
 
+    <!-- ==================== RESULTS PANEL ==================== -->
+    <div id="resultsPanel" class="fixed top-16 left-5 z-[150] hidden" style="width:320px">
+        <div class="glass-panel rounded-2xl p-4 border border-violet-700/40 space-y-2" style="background:rgba(15,10,30,0.92)">
+            <div class="flex items-center justify-between">
+                <div class="text-xs font-bold text-violet-300 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-chart-area text-violet-400"></i> Live Probe Results
+                </div>
+                <button id="closeResultsPanel" class="text-slate-400 hover:text-white text-sm">&times;</button>
+            </div>
+            <div id="resultsPanelCoords" class="text-[10px] text-cyan-400 font-mono">No probe point set — use Point Probe to set one</div>
+            <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px]" id="resultsPanelGrid">
+                <div class="flex justify-between"><span class="text-slate-400">Temperature</span><span id="rpT" class="text-white font-mono">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Rel. Humidity</span><span id="rpRH" class="text-white font-mono">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Dew Point</span><span id="rpTdp" class="text-white font-mono">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Wet Bulb</span><span id="rpTwb" class="text-white font-mono">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Vapour Pr.</span><span id="rpPv" class="text-white font-mono">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Sat. Pr.</span><span id="rpPws" class="text-white font-mono">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Hum. Ratio ω</span><span id="rpOmega" class="text-white font-mono">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Enthalpy</span><span id="rpH" class="text-white font-mono">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Air Density</span><span id="rpRho" class="text-white font-mono">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Pressure (abs)</span><span id="rpP" class="text-white font-mono">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Gauge Pressure</span><span id="rpPgauge" class="text-white font-mono">-</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Luminosity</span><span id="rpLux" class="text-white font-mono">-</span></div>
+                <div class="col-span-2 flex justify-between border-t border-slate-700/40 pt-0.5 mt-0.5">
+                    <span class="text-slate-400">Velocity Vx,Vy,Vz</span><span id="rpVxyz" class="text-white font-mono">-</span>
+                </div>
+                <div class="col-span-2 flex justify-between">
+                    <span class="text-slate-400">Speed |V|</span><span id="rpVmag" class="text-white font-mono text-cyan-300">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ==================== END RESULTS PANEL ==================== -->
+
     <footer class="w-full z-20 px-5 pb-3">
         <div class="glass-panel rounded-2xl p-3 flex flex-col gap-2 max-w-7xl mx-auto border border-slate-800/80">
             
@@ -570,12 +577,12 @@
                         <span id="metricHumidity" class="text-base font-extrabold text-teal-400">0%</span>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">CO₂</span>
-                        <span id="metricCo2" class="text-base font-extrabold text-amber-400">896 ppm</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">Pressure</span>
+                        <span id="metricPressure" class="text-base font-extrabold text-amber-400">101325 Pa</span>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">O₂</span>
-                        <span id="metricO2" class="text-base font-extrabold text-sky-400">20.9%</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold block">Air Density</span>
+                        <span id="metricAirDensity" class="text-base font-extrabold text-sky-400">1.19 kg/m³</span>
                     </div>
                     <div>
                         <span class="text-[10px] text-slate-400 uppercase font-semibold block">Luminosity</span>
@@ -587,7 +594,6 @@
                 <div class="flex items-center gap-2 font-mono text-xs text-slate-400">
                     <span id="simTimeDisplay">t = 0h 00m 00s</span>
                     <span id="acStatusBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500/40">AC: ON</span>
-                    <span id="fanStatusBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-500/40">FAN: 287 RPM</span>
                     <button id="toggleTelemetryBtn" class="ml-1 px-2 py-0.5 rounded-lg bg-slate-700/60 hover:bg-slate-600 text-slate-300 hover:text-white transition text-[10px] flex items-center gap-1 border border-slate-600/40" title="Collapse/expand charts">
                         <i class="fa-solid fa-chevron-down" id="telemetryChevron"></i>
                     </button>
@@ -646,22 +652,22 @@
                     <canvas id="chartHumidity" class="sparkline"></canvas>
                 </div>
 
-                <!-- CO2 Sparkline -->
+                <!-- Pressure Sparkline -->
                 <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800/80 flex flex-col justify-between">
                     <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400 mb-1">
-                        <span>CO₂ [PPM]</span>
-                        <span id="sparkValCo2" class="text-amber-400">895.7 ppm</span>
+                        <span>PRESSURE [Pa]</span>
+                        <span id="sparkValPressure" class="text-amber-400">101325 Pa</span>
                     </div>
-                    <canvas id="chartCo2" class="sparkline"></canvas>
+                    <canvas id="chartPressure" class="sparkline"></canvas>
                 </div>
 
-                <!-- O2 Sparkline -->
+                <!-- Density Sparkline -->
                 <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800/80 flex flex-col justify-between">
                     <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400 mb-1">
-                        <span>O₂ [%]</span>
-                        <span id="sparkValO2" class="text-sky-400">20.9%</span>
+                        <span>DENSITY [kg/m³]</span>
+                        <span id="sparkValDensity" class="text-sky-400">1.19 kg/m³</span>
                     </div>
-                    <canvas id="chartO2" class="sparkline"></canvas>
+                    <canvas id="chartDensity" class="sparkline"></canvas>
                 </div>
 
                 <!-- Luminosity Sparkline -->
@@ -688,8 +694,6 @@
             // User-configurable initial conditions
             initTemp: 29.3,
             initHumidity: 12.0,
-            initCo2: 896.0,
-            initO2: 20.65,
 
             // Outdoor Parameters
             extTemp: 35.0,
@@ -709,9 +713,6 @@
             pcPower: 300,
             cpuUsage: 41,
 
-            fanRpm: 287,
-            fanAutoMode: true,
-
             peopleCount: 0,
             doorAngle: 0,
             simSpeed: 108,
@@ -722,13 +723,18 @@
             sofaSceneX: 2.35, sofaSceneZ: 0.0,
             deskXPositions: [-1.6, 0.0, 1.6], deskSceneZ: -1.9,
 
-            // Dynamic Environmental Telemetry (starts at initial conditions)
+            // Dynamic Environmental Telemetry
             temp: 29.3,
             humidity: 12.0,
-            co2: 896.0,
-            o2: 20.65,
             lux: 810.0,
-            placeMode: null
+            avgPressure: 101325,
+            avgDensity: 1.19,
+            placeMode: null,
+
+            // Probe point state (auto-updating)
+            probeActive: false,
+            probeI: 5, probeJ: 2, probeK: 4,
+            probeUX: 3.0, probeUY: 1.0, probeUZ: 2.5
         };
 
         // Export history for Excel download (1 record per real second)
@@ -777,6 +783,7 @@
             document.getElementById('sliderPeople').value = state.peopleCount;
             document.getElementById('valPeople').innerText = state.peopleCount;
             updatePeopleAvatars();
+            if (fdm.T) fdmBuildSolid();
         }
 
         // Telemetry History Buffers for Charts
@@ -784,8 +791,8 @@
         const historyData = {
             temp: Array(MAX_HIST).fill(state.temp),
             humidity: Array(MAX_HIST).fill(state.humidity),
-            co2: Array(MAX_HIST).fill(state.co2),
-            o2: Array(MAX_HIST).fill(state.o2),
+            pressure: Array(MAX_HIST).fill(state.avgPressure),
+            density: Array(MAX_HIST).fill(state.avgDensity),
             lux: Array(MAX_HIST).fill(state.lux)
         };
 
@@ -793,8 +800,8 @@
         function resetHistoryData() {
             historyData.temp.fill(state.temp);
             historyData.humidity.fill(state.humidity);
-            historyData.co2.fill(state.co2);
-            historyData.o2.fill(state.o2);
+            historyData.pressure.fill(state.avgPressure);
+            historyData.density.fill(state.avgDensity);
             historyData.lux.fill(state.lux);
         }
 
@@ -807,6 +814,332 @@
 
         function getPersonRoomPos(i) {
             return (customPeoplePositions[i] !== undefined) ? customPeoplePositions[i] : PRESET_POS[i % PRESET_POS.length];
+        }
+
+        // --- FDM 3D GRID PHYSICS ENGINE ---
+        const FDM_NX = 10, FDM_NY = 6, FDM_NZ = 8;
+        const FDM_N  = FDM_NX * FDM_NY * FDM_NZ;
+        const FDM_DT_MAX = 0.5;
+
+        const fdm = {
+            T:null, omega:null, u:null, v:null, w:null, P:null, solid:null,
+            Tn:null, on:null, un:null, vn:null, wn:null
+        };
+
+        function fdmIdx(i,j,k){ return i*FDM_NY*FDM_NZ + j*FDM_NZ + k; }
+
+        function humRatioFromRH(T, RH_pct) {
+            const pws = 610.78 * Math.exp(17.27 * T / (T + 237.3));
+            const pv  = (RH_pct/100) * pws;
+            return 0.621945 * pv / Math.max(101325 - pv, 1);
+        }
+        function rhFromOmega(om, T) {
+            const pws = 610.78 * Math.exp(17.27 * T / (T + 237.3));
+            const pv  = om * 101325 / (0.621945 + om);
+            return Math.max(0, Math.min(100, pv/pws*100));
+        }
+        function omSat(T) {
+            const pws = 610.78 * Math.exp(17.27 * T / (T + 237.3));
+            return 0.621945 * pws / Math.max(101325 - pws, 1);
+        }
+        function cellDensity(T, om) {
+            const pv = om * 101325 / (0.621945 + om);
+            const Tk = T + 273.15;
+            return (101325-pv)/(287.058*Tk) + pv/(461.495*Tk);
+        }
+
+        function fdmInitFields() {
+            fdm.T     = new Float32Array(FDM_N);
+            fdm.omega = new Float32Array(FDM_N);
+            fdm.u     = new Float32Array(FDM_N);
+            fdm.v     = new Float32Array(FDM_N);
+            fdm.w     = new Float32Array(FDM_N);
+            fdm.P     = new Float32Array(FDM_N);
+            fdm.solid = new Uint8Array(FDM_N);
+            fdm.Tn    = new Float32Array(FDM_N);
+            fdm.on    = new Float32Array(FDM_N);
+            fdm.un    = new Float32Array(FDM_N);
+            fdm.vn    = new Float32Array(FDM_N);
+            fdm.wn    = new Float32Array(FDM_N);
+            fdmResetFields();
+            fdmBuildSolid();
+        }
+
+        function fdmResetFields() {
+            const omInit = humRatioFromRH(state.initTemp, state.initHumidity);
+            const H = state.roomHeight;
+            for (let idx = 0; idx < FDM_N; idx++) {
+                fdm.T[idx]     = state.initTemp;
+                fdm.omega[idx] = omInit;
+                fdm.u[idx] = fdm.v[idx] = 0;
+                fdm.w[idx] = 0.05;
+            }
+            for (let i=0;i<FDM_NX;i++) for (let j=0;j<FDM_NY;j++) for (let k=0;k<FDM_NZ;k++) {
+                const y = (j+0.5)*H/FDM_NY;
+                fdm.P[fdmIdx(i,j,k)] = 101325 - 1.2*9.81*(H-y);
+            }
+        }
+
+        function fdmBuildSolid() {
+            const W=state.roomWidth, H=state.roomHeight, D=state.roomDepth;
+            const dx=W/FDM_NX, dy=H/FDM_NY, dz=D/FDM_NZ;
+            fdm.solid.fill(0);
+            for (let i=0;i<FDM_NX;i++) for (let j=0;j<FDM_NY;j++) for (let k=0;k<FDM_NZ;k++) {
+                const cx=-W/2+(i+0.5)*dx, cy=(j+0.5)*dy, cz=D/2-(k+0.5)*dz;
+                // Sofa (rotation -PI/2: x-extent ±0.5, z-extent ±1.25)
+                if (Math.abs(cx-state.sofaSceneX)<0.52 && Math.abs(cz-state.sofaSceneZ)<1.28 && cy<0.95) { fdm.solid[fdmIdx(i,j,k)]=1; continue; }
+                // Desks
+                let isDesk=false;
+                for (const dx2 of state.deskXPositions) {
+                    if (Math.abs(cx-dx2)<0.65 && Math.abs(cz-state.deskSceneZ)<0.42 && cy<0.80) { isDesk=true; break; }
+                }
+                if (isDesk) { fdm.solid[fdmIdx(i,j,k)]=1; continue; }
+                // Placed boxes
+                for (const box of placedBoxes) {
+                    if (!box) continue;
+                    const bp=box.geometry.parameters;
+                    if (Math.abs(cx-box.position.x)<bp.width/2+0.1 && cy<bp.height+0.1 && Math.abs(cz-box.position.z)<bp.depth/2+0.1) { fdm.solid[fdmIdx(i,j,k)]=1; break; }
+                }
+                // People
+                for (let p=0;p<state.peopleCount;p++) {
+                    const pp=getPersonRoomPos(p);
+                    if (Math.abs(cx-pp.x)<0.25 && Math.abs(cz-pp.z)<0.25 && cy<1.2) { fdm.solid[fdmIdx(i,j,k)]=1; break; }
+                }
+            }
+        }
+
+        function fdmStep(dt) {
+            const W=state.roomWidth, H=state.roomHeight, D=state.roomDepth;
+            const NX=FDM_NX, NY=FDM_NY, NZ=FDM_NZ;
+            const dx=W/NX, dy=H/NY, dz=D/NZ;
+            const Vcell=dx*dy*dz;
+            const aT=22e-6, aOm=25e-6, nu=15e-6;
+            const cp=1006, rhoA=1.2, g=9.81;
+            const beta=1/(state.temp+273.15);
+            const Tref=state.acSetpoint;
+            const doorF=state.doorAngle/90;
+            const extOm=humRatioFromRH(state.extTemp, state.extHumidity);
+
+            // AC params
+            const acOn=state.acState;
+            const Tac=state.acSetpoint;
+            const omAC=humRatioFromRH(Tac, 50);
+            const dtAC=Math.max(1, state.temp-Tac);
+            const vAC=Math.min(2.5, state.acCapacity/(cp*rhoA*dtAC*dx*dy));
+            const ACi=Math.min(NX-1,Math.max(0,Math.round((0+W/2)/dx)-1));
+            const ACj=Math.min(NY-1,Math.round((H-0.5)/dy));
+            const ACk=0;
+
+            // People, desk heat source strengths [K/s per cell]
+            const pHeat=100/(rhoA*cp*Vcell);
+            const pcHeat=(state.pcPower*state.cpuUsage/100)/(rhoA*cp*Vcell);
+            const ledHeat=(state.ledWattage*2)/(NX*NZ*rhoA*cp*Vcell);
+
+            fdm.Tn.set(fdm.T); fdm.on.set(fdm.omega);
+            fdm.un.set(fdm.u); fdm.vn.set(fdm.v); fdm.wn.set(fdm.w);
+
+            for (let i=0;i<NX;i++) for (let j=0;j<NY;j++) for (let k=0;k<NZ;k++) {
+                const idx=fdmIdx(i,j,k);
+                if (fdm.solid[idx]) continue;
+
+                const T=fdm.T[idx], om=fdm.omega[idx];
+                const u=fdm.u[idx], v=fdm.v[idx], ww=fdm.w[idx];
+
+                // Boundary / neighbor temps (wall BCs)
+                const extTBC=state.extTemp;
+                function Tn_(ii,jj,kk) {
+                    if (ii<0||ii>=NX) return extTBC; if (jj<0) return T; if (jj>=NY) return extTBC; if (kk<0||kk>=NZ) return extTBC;
+                    return fdm.solid[fdmIdx(ii,jj,kk)] ? T : fdm.T[fdmIdx(ii,jj,kk)];
+                }
+                function On_(ii,jj,kk) {
+                    if (ii<0||ii>=NX) return extOm; if (jj<0) return om; if (jj>=NY) return extOm; if (kk<0||kk>=NZ) return extOm;
+                    return fdm.solid[fdmIdx(ii,jj,kk)] ? om : fdm.omega[fdmIdx(ii,jj,kk)];
+                }
+                function Un_(ii,jj,kk,comp) {
+                    const arr=comp==='u'?fdm.u:comp==='v'?fdm.v:fdm.w;
+                    if (ii<0||ii>=NX||jj<0||jj>=NY||kk<0||kk>=NZ) return 0;
+                    return fdm.solid[fdmIdx(ii,jj,kk)]?0:arr[fdmIdx(ii,jj,kk)];
+                }
+
+                const Tim=Tn_(i-1,j,k), Tip=Tn_(i+1,j,k);
+                const Tjm=Tn_(i,j-1,k), Tjp=Tn_(i,j+1,k);
+                const Tkm=Tn_(i,j,k-1), Tkp=Tn_(i,j,k+1);
+                const lapT=(Tim-2*T+Tip)/(dx*dx)+(Tjm-2*T+Tjp)/(dy*dy)+(Tkm-2*T+Tkp)/(dz*dz);
+                const dTdx=u>0?(T-Tn_(i-1,j,k))/dx:(Tn_(i+1,j,k)-T)/dx;
+                const dTdy=v>0?(T-Tn_(i,j-1,k))/dy:(Tn_(i,j+1,k)-T)/dy;
+                const dTdz=ww>0?(T-Tn_(i,j,k-1))/dz:(Tn_(i,j,k+1)-T)/dz;
+                const advT=u*dTdx+v*dTdy+ww*dTdz;
+
+                const oim=On_(i-1,j,k), oip=On_(i+1,j,k);
+                const ojm=On_(i,j-1,k), ojp=On_(i,j+1,k);
+                const okm=On_(i,j,k-1), okp=On_(i,j,k+1);
+                const lapOm=(oim-2*om+oip)/(dx*dx)+(ojm-2*om+ojp)/(dy*dy)+(okm-2*om+okp)/(dz*dz);
+                const dodx=u>0?(om-On_(i-1,j,k))/dx:(On_(i+1,j,k)-om)/dx;
+                const dody=v>0?(om-On_(i,j-1,k))/dy:(On_(i,j+1,k)-om)/dy;
+                const dodz=ww>0?(om-On_(i,j,k-1))/dz:(On_(i,j,k+1)-om)/dz;
+                const advOm=u*dodx+v*dody+ww*dodz;
+
+                // Heat sources
+                let ST=0;
+                // Wall conduction
+                const kW=state.wallPermeability*0.4;
+                if (i===0||i===NX-1) ST+=kW*(state.extTemp-T)/(dx*rhoA*cp);
+                if (k===0) ST+=kW*(state.extTemp-T)/(dz*rhoA*cp);
+                if (k===NZ-1) ST+=kW*(state.extTemp-T)/(dz*rhoA*cp);
+                if (j===NY-1) ST+=kW*(state.extTemp-T)/(dy*rhoA*cp);
+                // Door exchange (front wall centre)
+                if (k===NZ-1 && Math.abs((i+0.5)*dx-W/2)<0.7) ST+=doorF*0.4*(state.extTemp-T)/(rhoA*cp*dz);
+                // People heat
+                for (let p=0;p<state.peopleCount;p++) {
+                    const pp=getPersonRoomPos(p);
+                    const pi=Math.min(NX-1,Math.max(0,Math.floor((pp.x+W/2)/dx)));
+                    const pk=Math.min(NZ-1,Math.max(0,Math.floor((D/2-pp.z)/dz)));
+                    if (pi===i && pk===k && j===0) ST+=pHeat;
+                }
+                // PC heat (3 desks, ground level)
+                for (const dkX of state.deskXPositions) {
+                    const di=Math.min(NX-1,Math.max(0,Math.floor((dkX+W/2)/dx)));
+                    const dk2=Math.min(NZ-1,Math.max(0,Math.floor((D/2-state.deskSceneZ)/dz)));
+                    if (di===i && dk2===k && j<=1) ST+=pcHeat*0.5;
+                }
+                // LED heat (ceiling)
+                if (j===NY-1) ST+=ledHeat;
+                // Infiltration moisture contribution to T
+                ST+=(state.infiltrationACH/3600)*0.08*(state.extTemp-T);
+
+                fdm.Tn[idx]=Math.max(10,Math.min(50, T+dt*(aT*lapT-advT+ST)));
+
+                // Moisture sources
+                let Som=0;
+                if (i===0||i===NX-1||k===0) Som+=(state.infiltrationACH/3600)*0.1*(extOm-om);
+                if (k===NZ-1) Som+=doorF*0.15*(extOm-om)/dz;
+                for (let p=0;p<state.peopleCount;p++) {
+                    const pp=getPersonRoomPos(p);
+                    const pi=Math.min(NX-1,Math.max(0,Math.floor((pp.x+W/2)/dx)));
+                    const pk=Math.min(NZ-1,Math.max(0,Math.floor((D/2-pp.z)/dz)));
+                    if (pi===i && pk===k && j===0) Som+=1.1e-5/(rhoA*Vcell);
+                }
+                fdm.on[idx]=Math.max(0, om+dt*(aOm*lapOm-advOm+Som));
+                // Condensation
+                const os=omSat(fdm.Tn[idx]); if (fdm.on[idx]>os) fdm.on[idx]=os;
+
+                // Velocity
+                const lapU=(Un_(i-1,j,k,'u')-2*u+Un_(i+1,j,k,'u'))/(dx*dx)+(Un_(i,j-1,k,'u')-2*u+Un_(i,j+1,k,'u'))/(dy*dy)+(Un_(i,j,k-1,'u')-2*u+Un_(i,j,k+1,'u'))/(dz*dz);
+                const lapV=(Un_(i,j-1,k,'v')-2*v+Un_(i,j+1,k,'v'))/(dy*dy)+(Un_(i-1,j,k,'v')-2*v+Un_(i+1,j,k,'v'))/(dx*dx);
+                const lapW=(Un_(i,j,k-1,'w')-2*ww+Un_(i,j,k+1,'w'))/(dz*dz)+(Un_(i,j-1,k,'w')-2*ww+Un_(i,j+1,k,'w'))/(dy*dy);
+                const buoy=g*beta*(T-Tref);
+                fdm.un[idx]=Math.max(-3,Math.min(3, u+dt*(nu*lapU*0.08)));
+                fdm.vn[idx]=Math.max(-2,Math.min(2, v+dt*(nu*lapV*0.08+buoy*0.4)));
+                fdm.wn[idx]=Math.max(-3,Math.min(3, ww+dt*(nu*lapW*0.08)));
+            }
+
+            // AC injection — overwrite supply cells
+            if (acOn) {
+                for (let di=-1;di<=1;di++) for (let dj=-1;dj<=0;dj++) {
+                    const ii=ACi+di, jj=ACj+dj;
+                    if (ii<0||ii>=NX||jj<0||jj>=NY) continue;
+                    const idx=fdmIdx(ii,jj,ACk);
+                    if (!fdm.solid[idx]) {
+                        const frac=di===0&&dj===0?1.0:0.4;
+                        fdm.Tn[idx] =fdm.Tn[idx]*(1-frac)+Tac*frac;
+                        fdm.on[idx] =fdm.on[idx]*(1-frac)+omAC*frac;
+                        fdm.wn[idx]+=vAC*frac;
+                    }
+                }
+            }
+
+            // Zero velocity on solid cells
+            for (let idx=0;idx<FDM_N;idx++) {
+                if (fdm.solid[idx]) { fdm.un[idx]=fdm.vn[idx]=fdm.wn[idx]=0; }
+            }
+
+            // Swap
+            [fdm.T,fdm.Tn]=[fdm.Tn,fdm.T];
+            [fdm.omega,fdm.on]=[fdm.on,fdm.omega];
+            [fdm.u,fdm.un]=[fdm.un,fdm.u];
+            [fdm.v,fdm.vn]=[fdm.vn,fdm.v];
+            [fdm.w,fdm.wn]=[fdm.wn,fdm.w];
+
+            // Update pressure + room averages
+            let sumT=0,sumOm=0,sumP=0,sumRho=0,cnt=0;
+            for (let i=0;i<NX;i++) for (let j=0;j<NY;j++) for (let k=0;k<NZ;k++) {
+                const idx=fdmIdx(i,j,k);
+                if (fdm.solid[idx]) continue;
+                const T=fdm.T[idx], om=fdm.omega[idx];
+                const y=(j+0.5)*H/NY;
+                const rho=cellDensity(T,om);
+                fdm.P[idx]=101325 - rho*g*(H-y);
+                sumT+=T; sumOm+=om; sumP+=fdm.P[idx]; sumRho+=rho; cnt++;
+            }
+            if (cnt>0) {
+                state.temp    =sumT/cnt;
+                state.humidity=rhFromOmega(sumOm/cnt, state.temp);
+                state.avgPressure=Math.round(sumP/cnt);
+                state.avgDensity=parseFloat((sumRho/cnt).toFixed(3));
+            }
+            if (state.temp>state.acSetpoint+0.2) state.acState=true;
+            else if (state.temp<state.acSetpoint-0.2) state.acState=false;
+        }
+
+        // Get probe cell psychrometrics and velocity for display/export
+        function getProbeState() {
+            if (!fdm.T) return null;
+            const idx=fdmIdx(state.probeI,state.probeJ,state.probeK);
+            const T=fdm.T[idx], om=fdm.omega[idx], P=fdm.P[idx];
+            const u=fdm.u[idx], v=fdm.v[idx], ww=fdm.w[idx];
+            const pws=610.78*Math.exp(17.27*T/(T+237.3));
+            const pv=om*P/(0.621945+om);
+            const RH=Math.max(0,Math.min(100,pv/pws*100));
+            const lnR=Math.log(Math.max(pv,0.01)/610.78);
+            const Tdp=237.3*lnR/(17.27-lnR);
+            const Twb=T*Math.atan(0.151977*Math.sqrt(RH+8.313659))+Math.atan(T+RH)-Math.atan(RH-1.676331)+0.00391838*Math.pow(RH,1.5)*Math.atan(0.023101*RH)-4.686035;
+            const Tk=T+273.15;
+            const rho=(P-pv)/(287.058*Tk)+pv/(461.495*Tk);
+            const h=1.006*T+om*(2501+1.86*T);
+            const vmag=Math.sqrt(u*u+v*v+ww*ww);
+            return {T,om,P,u,v,ww,pws,pv,RH,Tdp,Twb,rho,h,vmag};
+        }
+
+        function updateProbeDisplay() {
+            if (!state.probeActive || !fdm.T) return;
+            const ps=getProbeState(); if (!ps) return;
+            const f1=v=>isFinite(v)?v.toFixed(1):'-';
+            const f2=v=>isFinite(v)?v.toFixed(2):'-';
+            const f3=v=>isFinite(v)?v.toFixed(3):'-';
+            // Sidebar probe
+            if (!document.getElementById('probeResults').classList.contains('hidden')) {
+                document.getElementById('prT').innerText   =f1(ps.T)+' °C';
+                document.getElementById('prRH').innerText  =f1(ps.RH)+' %';
+                document.getElementById('prTdp').innerText =f1(ps.Tdp)+' °C';
+                document.getElementById('prTwb').innerText =f1(ps.Twb)+' °C';
+                document.getElementById('prPv').innerText  =Math.round(ps.pv)+' Pa';
+                document.getElementById('prPws').innerText =Math.round(ps.pws)+' Pa';
+                document.getElementById('prOmega').innerText=(ps.om*1000).toFixed(1)+' g/kg';
+                document.getElementById('prH').innerText   =f1(ps.h)+' kJ/kg';
+                document.getElementById('prRho').innerText =f3(ps.rho)+' kg/m³';
+                document.getElementById('prP').innerText   =Math.round(ps.P)+' Pa';
+                document.getElementById('prPgauge').innerText=Math.round(ps.P-101325)+' Pa';
+                document.getElementById('prLux').innerText =Math.round(state.lux)+' lux';
+                document.getElementById('prVel').innerText =f2(ps.u)+', '+f2(ps.v)+', '+f2(ps.ww)+', '+f2(ps.vmag)+' m/s';
+            }
+            // Results panel
+            if (!document.getElementById('resultsPanel').classList.contains('hidden')) {
+                document.getElementById('resultsPanelCoords').innerText=`X=${state.probeUX.toFixed(1)} m  Y=${state.probeUY.toFixed(1)} m  Z=${state.probeUZ.toFixed(1)} m`;
+                document.getElementById('rpT').innerText   =f1(ps.T)+' °C';
+                document.getElementById('rpRH').innerText  =f1(ps.RH)+' %';
+                document.getElementById('rpTdp').innerText =f1(ps.Tdp)+' °C';
+                document.getElementById('rpTwb').innerText =f1(ps.Twb)+' °C';
+                document.getElementById('rpPv').innerText  =Math.round(ps.pv)+' Pa';
+                document.getElementById('rpPws').innerText =Math.round(ps.pws)+' Pa';
+                document.getElementById('rpOmega').innerText=(ps.om*1000).toFixed(1)+' g/kg';
+                document.getElementById('rpH').innerText   =f1(ps.h)+' kJ/kg';
+                document.getElementById('rpRho').innerText =f3(ps.rho)+' kg/m³';
+                document.getElementById('rpP').innerText   =Math.round(ps.P)+' Pa';
+                document.getElementById('rpPgauge').innerText=Math.round(ps.P-101325)+' Pa';
+                document.getElementById('rpLux').innerText =Math.round(state.lux)+' lux';
+                document.getElementById('rpVxyz').innerText=f2(ps.u)+', '+f2(ps.v)+', '+f2(ps.ww)+' m/s';
+                document.getElementById('rpVmag').innerText=f2(ps.vmag)+' m/s';
+            }
         }
 
         // --- PSYCHROMETRIC ENGINE ---
@@ -848,112 +1181,28 @@
             };
         }
 
-        // --- SPATIAL ENVIRONMENT MODEL (1-decimal accuracy) ---
-        // Returns local temperature at Three.js coords (tx, ty, tz) with vertical stratification
-        function computeLocalTemp(tx, ty, tz) {
-            let T = state.temp;
-            for (let i = 0; i < state.peopleCount; i++) {
-                const p = getPersonRoomPos(i);
-                const d2 = (tx - p.x) ** 2 + (tz - p.z) ** 2;
-                T += 0.8 * Math.exp(-d2 / 0.6);
-            }
-            const pcPos = [{ x: -1.6, z: -1.9 }, { x: 0, z: -1.9 }, { x: 1.6, z: -1.9 }];
-            for (const p of pcPos) {
-                const d2 = (tx - p.x) ** 2 + (tz - p.z) ** 2;
-                T += (state.pcPower * state.cpuUsage / 100000) * 0.3 * Math.exp(-d2 / 0.5);
-            }
-            if (state.acState) {
-                const dAC = Math.sqrt(tx * tx + (tz + 2.0) ** 2);
-                T -= (state.acCapacity / 3500) * 1.5 * Math.exp(-dAC * dAC / 3.0);
-            }
-            // Vertical stratification: +0.3 °C per metre of height (warm air rises)
-            T += ty * 0.3;
-            return Math.round(T * 10) / 10;
-        }
-
-        // Returns local relative humidity at Three.js coords (tx, tz)
-        function computeLocalHumidity(tx, tz) {
-            let RH = state.humidity;
-            for (let i = 0; i < state.peopleCount; i++) {
-                const p = getPersonRoomPos(i);
-                const d2 = (tx - p.x) ** 2 + (tz - p.z) ** 2;
-                RH += 2.5 * Math.exp(-d2 / 0.8);
-            }
-            return Math.min(100, Math.round(RH * 10) / 10);
-        }
-
-        // Returns air velocity at Three.js coords (tx, ty, tz) with vertical component
-        function computeLocalVelocity(tx, ty, tz) {
-            const vFan = (state.fanRpm / 2000) * 1.2;
-            // Fan on left wall blows rightward; flow decays across the room
-            let vx = vFan * (1 - Math.max(0, tx + 3) / 6.0) * 0.8 + 0.1;
-            let vz = 0;
-            let vy = 0;
-            // Horizontal buoyancy + vertical upwash near people
-            for (let i = 0; i < state.peopleCount; i++) {
-                const p = getPersonRoomPos(i);
-                const distXZ = Math.max(0.1, Math.sqrt((tx - p.x) ** 2 + (tz - p.z) ** 2));
-                if (distXZ < 1.5) {
-                    const w = Math.exp(-distXZ * distXZ / 0.5);
-                    vx += 0.1 * (tx - p.x) / distXZ * w;
-                    vz += 0.1 * (tz - p.z) / distXZ * w;
-                }
-                // Upward buoyancy plume above person (peak near chest height ~1 m)
-                const dXZ2 = (tx - p.x) ** 2 + (tz - p.z) ** 2;
-                vy += 0.15 * Math.exp(-dXZ2 / 0.3) * Math.exp(-((ty - 1.0) ** 2) / 1.5);
-            }
-            // AC cold supply: outward flow in XZ + cold air sinks (negative vy near ceiling)
-            if (state.acState) {
-                const dAC = Math.max(0.1, Math.sqrt(tx * tx + (tz + 2.0) ** 2));
-                if (dAC < 2.5) {
-                    const fAC = (state.acCapacity / 3500) * 0.4 * Math.exp(-dAC * dAC / 2.5);
-                    vz += fAC * (tz + 2.0) / dAC;
-                }
-                // Cold air descends near AC (back wall, high)
-                const dACXZ = Math.sqrt(tx * tx + (tz + 2.0) ** 2);
-                vy -= (state.acCapacity / 3500) * 0.1 * Math.exp(-dACXZ * dACXZ / 2.0)
-                      * Math.exp(-((ty - 2.5) ** 2) / 1.0);
-            }
-            const vmag = Math.sqrt(vx * vx + vy * vy + vz * vz);
-            return { vx: vx.toFixed(1), vy: vy.toFixed(1), vz: vz.toFixed(1), vmag: vmag.toFixed(1) };
-        }
-
-        // --- POINT PROBE ---
+        // --- POINT PROBE (FDM-based, auto-updating) ---
         function probePoint(ux, uy, uz) {
+            const W=state.roomWidth, H=state.roomHeight, D=state.roomDepth;
             const { x, z } = userToRoom(ux, uz);
-            const ty = uy; // y in Three.js scene = height in metres
-            const localT  = computeLocalTemp(x, ty, z);
-            const localRH = computeLocalHumidity(x, z);
-            const ps  = computePsychrometrics(localT, localRH);
-            const vel = computeLocalVelocity(x, ty, z);
-            document.getElementById('probeResX').innerText = ux.toFixed(1);
-            document.getElementById('probeResY').innerText = uy.toFixed(1);
-            document.getElementById('probeResZ').innerText = uz.toFixed(1);
-            document.getElementById('prT').innerText    = localT.toFixed(1) + ' °C';
-            document.getElementById('prRH').innerText   = localRH.toFixed(1) + ' %';
-            document.getElementById('prTdp').innerText  = ps.Tdp + ' °C';
-            document.getElementById('prTwb').innerText  = ps.Twb + ' °C';
-            document.getElementById('prPv').innerText   = ps.pv  + ' Pa';
-            document.getElementById('prPws').innerText  = ps.pws + ' Pa';
-            document.getElementById('prOmega').innerText = ps.omega + ' g/kg';
-            document.getElementById('prH').innerText    = ps.h + ' kJ/kg';
-            document.getElementById('prRho').innerText  = ps.rho + ' kg/m³';
-            document.getElementById('prCo2').innerText  = Math.round(state.co2) + ' ppm';
-            document.getElementById('prO2').innerText   = state.o2.toFixed(1) + ' %';
-            document.getElementById('prVel').innerText  = vel.vx + ', ' + vel.vy + ', ' + vel.vz + ', ' + vel.vmag + ' m/s';
+            state.probeI=Math.min(FDM_NX-1,Math.max(0,Math.floor((x+W/2)/(W/FDM_NX))));
+            state.probeJ=Math.min(FDM_NY-1,Math.max(0,Math.floor(uy/(H/FDM_NY))));
+            state.probeK=Math.min(FDM_NZ-1,Math.max(0,Math.floor((D/2-z)/(D/FDM_NZ))));
+            state.probeUX=ux; state.probeUY=uy; state.probeUZ=uz;
+            state.probeActive=true;
+            document.getElementById('probeResX').innerText=ux.toFixed(1);
+            document.getElementById('probeResY').innerText=uy.toFixed(1);
+            document.getElementById('probeResZ').innerText=uz.toFixed(1);
             document.getElementById('probeResults').classList.remove('hidden');
-            // Show probe marker in 3D scene
-            if (probeMarker) {
-                probeMarker.position.set(x, ty, z);
-                probeMarker.visible = true;
-            }
+            if (probeMarker) { probeMarker.position.set(x, uy, z); probeMarker.visible=true; }
+            updateProbeDisplay();
         }
 
         // --- THREE.JS SCENE SETUP ---
         let scene, camera, renderer, controls;
         let roomGroup, roofMesh, lawnMesh;
         let walls = {}; // Store all 4 solid interior/exterior walls
-        let fanBladesMesh, acMesh, acLedMesh;
+        let acMesh, acLedMesh;
         let ledLight1, ledLight2, ledMesh1, ledMesh2;
         let peopleAvatars = [];
         let pcDesks = [];
@@ -1174,29 +1423,6 @@
 
             acGroup.position.set(0, ROOM_DIM.height - 0.5, -ROOM_DIM.depth / 2 + 0.13);
             roomGroup.add(acGroup);
-
-            // Exhaust Fan on Left Wall
-            const fanGroup = new THREE.Group();
-            const fanFrameGeo = new THREE.TorusGeometry(0.3, 0.04, 16, 32);
-            const fanFrameMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.7 });
-            const fanFrame = new THREE.Mesh(fanFrameGeo, fanFrameMat);
-            fanGroup.add(fanFrame);
-
-            // Fan Blades
-            fanBladesMesh = new THREE.Group();
-            const bladeGeo = new THREE.BoxGeometry(0.24, 0.05, 0.01);
-            const bladeMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
-            for (let i = 0; i < 4; i++) {
-                const blade = new THREE.Mesh(bladeGeo, bladeMat);
-                blade.rotation.z = (Math.PI / 2) * i;
-                blade.position.set(Math.cos((Math.PI / 2) * i) * 0.12, Math.sin((Math.PI / 2) * i) * 0.12, 0);
-                fanBladesMesh.add(blade);
-            }
-            fanGroup.add(fanBladesMesh);
-
-            fanGroup.position.set(-ROOM_DIM.width / 2 + 0.05, ROOM_DIM.height - 0.8, 0.8);
-            fanGroup.rotation.y = Math.PI / 2;
-            roomGroup.add(fanGroup);
 
             // --- FURNITURE LAYOUT ---
             // 1. Computer Workstations (positions from state)
@@ -1438,108 +1664,56 @@
 
         // --- PHYSICS & TELEMETRY ENGINE ---
         function updatePhysics(dt) {
-            if (!state.isRunning) return;
+            if (!state.isRunning || !fdm.T) return;
 
-            // dt in simulation time seconds
             const simDt = dt * state.simSpeed;
             state.elapsedSeconds += simDt;
 
-            // Door exchange factor (0 = closed, 1 = fully open 90°)
-            const doorFactor = state.doorAngle / 90.0;
-            const doorExRate = doorFactor * 0.12; // effective ACH-equivalent exchange rate
+            // FDM sub-steps for stability (CFL ~0.5s)
+            const nSteps = Math.max(1, Math.min(32, Math.ceil(simDt / FDM_DT_MAX)));
+            const dtSub  = simDt / nSteps;
+            for (let s = 0; s < nSteps; s++) fdmStep(dtSub);
 
-            // 1. CO2 Calculation (ppm)
-            const co2GenRate = state.peopleCount * 0.015;
-            const fanVentilationRate = (state.fanRpm / 2000) * 0.08 + (state.infiltrationACH * 0.005);
-            const co2Target = 400.0;
-            state.co2 += (co2GenRate - (state.co2 - co2Target) * (fanVentilationRate + doorExRate)) * (simDt / 10);
-            state.co2 = Math.max(400, Math.min(2500, state.co2));
+            // Luminosity
+            state.lux = Math.round(state.ledWattage * 18.0 + state.sunIntensity * (1 - state.sunroofTint / 100) * 4.5);
 
-            // 2. O2 Calculation (%) — independent of CO2; consumption-based model
-            // Each person consumes ~0.0125 %/10s; fan + infiltration + door replenish from outdoor 20.95 %
-            const o2ConsumptionRate = state.peopleCount * 0.0125;
-            const ventRate = (state.fanRpm / 2000) * 0.07 + (state.infiltrationACH * 0.004) + doorExRate * 0.9;
-            state.o2 += (-o2ConsumptionRate + (20.95 - state.o2) * ventRate) * (simDt / 10);
-            state.o2 = Math.max(18.0, Math.min(20.95, state.o2));
-
-            // 3. Heat & Temperature Calculation (°C)
-            const peopleHeat = state.peopleCount * 100;
-            const pcHeat = (state.pcPower * (state.cpuUsage / 100)) * Math.min(state.peopleCount, 3);
-            const ledHeat = state.ledWattage * 2;
-            const totalHeatWatts = peopleHeat + pcHeat + ledHeat;
-
-            if (state.temp > state.acSetpoint + 0.2) {
-                state.acState = true;
-            } else if (state.temp < state.acSetpoint - 0.2) {
-                state.acState = false;
-            }
-
-            const coolingPower = state.acState ? state.acCapacity : 0;
-            const netHeatRate = (totalHeatWatts - coolingPower) * 0.00008;
-
-            const wallHeatTransfer = (state.extTemp - state.temp) * (state.wallPermeability * 0.01);
-            const doorHeatTransfer = (state.extTemp - state.temp) * doorFactor * 0.08;
-
-            state.temp += (netHeatRate + wallHeatTransfer + doorHeatTransfer) * (simDt / 20);
-            state.temp = Math.max(15, Math.min(45, state.temp));
-
-            // Fan Auto Mode adjustments
-            if (state.fanAutoMode) {
-                if (state.co2 > 1000) {
-                    state.fanRpm = Math.min(2000, state.fanRpm + 10);
-                } else if (state.co2 < 600 && state.fanRpm > 100) {
-                    state.fanRpm = Math.max(0, state.fanRpm - 10);
-                }
-                document.getElementById('sliderFanRpm').value = Math.round(state.fanRpm);
-                document.getElementById('valFanRpm').innerText = `${Math.round(state.fanRpm)} RPM`;
-            }
-
-            // 4. Humidity Calculation (%)
-            const humGen = state.peopleCount * 0.02;
-            const acDehum = state.acState ? 0.08 : 0;
-            const extHumDiff = (state.extHumidity - state.humidity) * (0.01 + doorFactor * 0.06);
-            state.humidity += (humGen - acDehum + extHumDiff) * (simDt / 10);
-            state.humidity = Math.max(0, Math.min(100, state.humidity));
-
-            // 5. Luminosity Calculation (Lux)
-            const ledLux = state.ledWattage * 18.0;
-            const sunLux = state.sunIntensity * (1 - state.sunroofTint / 100) * 4.5;
-            state.lux = Math.round(ledLux + sunLux);
-
-            // Record to export history (once per real second)
+            // Export history (once per real second)
             const realNow = performance.now() / 1000;
             if (realNow - lastExportRealTime >= 1.0) {
                 lastExportRealTime = realNow;
+                const ps = state.probeActive ? getProbeState() : null;
                 exportHistory.push({
-                    simTime: formatTime(state.elapsedSeconds),
-                    temp: parseFloat(state.temp.toFixed(2)),
+                    simTime:  formatTime(state.elapsedSeconds),
+                    temp:     parseFloat(state.temp.toFixed(2)),
                     humidity: parseFloat(state.humidity.toFixed(2)),
-                    co2: parseFloat(state.co2.toFixed(2)),
-                    o2: parseFloat(state.o2.toFixed(2)),
-                    lux: Math.round(state.lux),
-                    ac: state.acState ? 'ON' : 'OFF',
-                    fanRpm: Math.round(state.fanRpm),
-                    people: state.peopleCount
+                    pressure: state.avgPressure,
+                    density:  state.avgDensity,
+                    lux:      Math.round(state.lux),
+                    ac:       state.acState ? 'ON' : 'OFF',
+                    people:   state.peopleCount,
+                    probeT:   ps ? parseFloat(ps.T.toFixed(2))   : '',
+                    probeRH:  ps ? parseFloat(ps.RH.toFixed(1))  : '',
+                    probeOm:  ps ? parseFloat((ps.om*1000).toFixed(2)) : '',
+                    probePv:  ps ? Math.round(ps.pv)             : '',
+                    probeP:   ps ? Math.round(ps.P)              : '',
+                    probeTdp: ps ? parseFloat(ps.Tdp.toFixed(1)) : '',
+                    probeRho: ps ? parseFloat(ps.rho.toFixed(3)) : '',
+                    probeH:   ps ? parseFloat(ps.h.toFixed(1))   : '',
+                    probeU:   ps ? parseFloat(ps.u.toFixed(2))   : '',
+                    probeV:   ps ? parseFloat(ps.v.toFixed(2))   : '',
+                    probeW:   ps ? parseFloat(ps.ww.toFixed(2))  : '',
+                    probeVmag:ps ? parseFloat(ps.vmag.toFixed(2)): ''
                 });
                 if (exportHistory.length > 3600) exportHistory.shift();
             }
 
-            // Append to Chart History Buffers
-            historyData.temp.push(state.temp);
-            historyData.temp.shift();
-            historyData.humidity.push(state.humidity);
-            historyData.humidity.shift();
-            historyData.co2.push(state.co2);
-            historyData.co2.shift();
-            historyData.o2.push(state.o2);
-            historyData.o2.shift();
-            historyData.lux.push(state.lux);
-            historyData.lux.shift();
+            historyData.temp.push(state.temp);        historyData.temp.shift();
+            historyData.humidity.push(state.humidity); historyData.humidity.shift();
+            historyData.pressure.push(state.avgPressure); historyData.pressure.shift();
+            historyData.density.push(state.avgDensity);   historyData.density.shift();
+            historyData.lux.push(state.lux);           historyData.lux.shift();
 
-            // Update 3D visual reactions
             update3DVisuals();
-            
-            // Update UI telemetry text and charts
             updateUI();
         }
 
@@ -1547,11 +1721,6 @@
             // Sliding door — translates leftward along X (slides behind left wall panel)
             if (doorPivotGroup) {
                 doorPivotGroup.position.x = -(state.doorAngle / 90) * 1.0;
-            }
-
-            // Fan Rotation — only animates while simulation is running
-            if (fanBladesMesh && state.fanRpm > 0 && state.isRunning) {
-                fanBladesMesh.rotation.z += (state.fanRpm / 60) * 0.05;
             }
 
             // LED Lights intensity
@@ -1616,40 +1785,32 @@
         }
 
         function updateUI() {
-            // Numeric Display Tiles
-            document.getElementById('metricTemp').innerText = `${state.temp.toFixed(1)}°C`;
-            document.getElementById('metricHumidity').innerText = `${Math.round(state.humidity)}%`;
-            document.getElementById('metricCo2').innerText = `${Math.round(state.co2)} ppm`;
-            document.getElementById('metricO2').innerText = `${state.o2.toFixed(1)}%`;
-            document.getElementById('metricLuminosity').innerText = `${Math.round(state.lux)} lux`;
+            document.getElementById('metricTemp').innerText      = `${state.temp.toFixed(1)}°C`;
+            document.getElementById('metricHumidity').innerText  = `${Math.round(state.humidity)}%`;
+            document.getElementById('metricPressure').innerText  = `${state.avgPressure} Pa`;
+            document.getElementById('metricAirDensity').innerText= `${state.avgDensity} kg/m³`;
+            document.getElementById('metricLuminosity').innerText= `${Math.round(state.lux)} lux`;
 
-            // Status Badges
             document.getElementById('simTimeDisplay').innerText = formatTime(state.elapsedSeconds);
-            
+
             const acBadge = document.getElementById('acStatusBadge');
             acBadge.innerText = state.acState ? "AC: ON" : "AC: OFF";
-            acBadge.className = state.acState ? 
-                "px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500/40" : 
+            acBadge.className = state.acState ?
+                "px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-500/40" :
                 "px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-500/40";
 
-            const fanBadge = document.getElementById('fanStatusBadge');
-            fanBadge.innerText = state.fanRpm > 0 ? `FAN: ${Math.round(state.fanRpm)} RPM` : "FAN: OFF";
+            document.getElementById('sparkValTemp').innerText    = `${state.temp.toFixed(1)}°C`;
+            document.getElementById('sparkValHumidity').innerText= `${state.humidity.toFixed(1)}%`;
+            document.getElementById('sparkValPressure').innerText= `${state.avgPressure} Pa`;
+            document.getElementById('sparkValDensity').innerText = `${state.avgDensity} kg/m³`;
+            document.getElementById('sparkValLux').innerText     = `${state.lux.toFixed(1)} lux`;
 
-            // Sparkline Numerical Titles
-            document.getElementById('sparkValTemp').innerText = `${state.temp.toFixed(1)}°C`;
-            document.getElementById('sparkValHumidity').innerText = `${state.humidity.toFixed(1)}%`;
-            document.getElementById('sparkValCo2').innerText = `${state.co2.toFixed(1)} ppm`;
-            document.getElementById('sparkValO2').innerText = `${state.o2.toFixed(1)}%`;
-            document.getElementById('sparkValLux').innerText = `${state.lux.toFixed(1)} lux`;
-
-            // Render Charts
-            drawSparkline('chartTemp', historyData.temp, '#f43f5e');
+            drawSparkline('chartTemp',     historyData.temp,     '#f43f5e');
             drawSparkline('chartHumidity', historyData.humidity, '#14b8a6');
-            drawSparkline('chartCo2', historyData.co2, '#f59e0b');
-            drawSparkline('chartO2', historyData.o2, '#38bdf8');
-            drawSparkline('chartLux', historyData.lux, '#fde047');
+            drawSparkline('chartPressure', historyData.pressure, '#f59e0b');
+            drawSparkline('chartDensity',  historyData.density,  '#38bdf8');
+            drawSparkline('chartLux',      historyData.lux,      '#fde047');
 
-            // Psychrometric Metrics Row
             const ps = computePsychrometrics(state.temp, state.humidity);
             document.getElementById('metricDewPt').innerText    = ps.Tdp + '°C';
             document.getElementById('metricWetBulb').innerText  = ps.Twb + '°C';
@@ -1668,10 +1829,13 @@
             const wb = XLSX.utils.book_new();
 
             // Sheet 1: Simulation Results
-            const headers = ['Sim Time', 'Temp (C)', 'Humidity (%)', 'CO2 (ppm)', 'O2 (%)', 'Luminosity (lux)', 'AC', 'Fan RPM', 'People'];
-            const rows = exportHistory.map(r => [r.simTime, r.temp, r.humidity, r.co2, r.o2, r.lux, r.ac, r.fanRpm, r.people]);
+            const headers = ['Sim Time','Temp (C)','Humidity (%)','Pressure (Pa)','Density (kg/m3)','Lux','AC','People',
+                             'Probe T (C)','Probe RH (%)','Probe ω (g/kg)','Probe Pv (Pa)','Probe P (Pa)',
+                             'Probe Tdp (C)','Probe ρ (kg/m3)','Probe h (kJ/kg)','Probe Vx','Probe Vy','Probe Vz','Probe |V| (m/s)'];
+            const rows = exportHistory.map(r => [r.simTime, r.temp, r.humidity, r.pressure, r.density, r.lux, r.ac, r.people,
+                r.probeT, r.probeRH, r.probeOm, r.probePv, r.probeP, r.probeTdp, r.probeRho, r.probeH, r.probeU, r.probeV, r.probeW, r.probeVmag]);
             const ws1 = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-            ws1['!cols'] = [14, 10, 12, 10, 8, 14, 6, 10, 8].map(w => ({ wch: w }));
+            ws1['!cols'] = [14,9,10,12,13,8,5,7, 10,9,12,10,10,11,13,10,9,9,9,12].map(w => ({ wch: w }));
             XLSX.utils.book_append_sheet(wb, ws1, 'Simulation Results');
 
             // Sheet 2: Parameters Snapshot
@@ -1689,10 +1853,9 @@
                 ['LED Wattage (each)', state.ledWattage, 'W'],
                 ['PC Power Rating', state.pcPower, 'W'],
                 ['CPU+GPU Usage', state.cpuUsage, '%'],
-                ['Fan RPM', Math.round(state.fanRpm), 'RPM'],
-                ['Fan Auto Mode', state.fanAutoMode ? 'ON' : 'OFF', ''],
                 ['People in Room', state.peopleCount, ''],
                 ['Simulation Speed', state.simSpeed, 'x'],
+                ['FDM Grid', `${FDM_NX}×${FDM_NY}×${FDM_NZ}`, 'cells'],
                 [],
                 ['Total Sim Time', formatTime(state.elapsedSeconds), ''],
                 ['Export Date', new Date().toLocaleString(), ''],
@@ -1736,7 +1899,7 @@
         function rebuildRoom() {
             if (roomGroup) scene.remove(roomGroup);
             roomGroup = null; walls = {}; sofaGroup = null; doorPivotGroup = null;
-            fanBladesMesh = null; acMesh = null; acLedMesh = null;
+            acMesh = null; acLedMesh = null;
             ledLight1 = null; ledLight2 = null; ledMesh1 = null; ledMesh2 = null;
             pcDesks = [];
             peopleAvatars.forEach(av => scene.remove(av)); peopleAvatars = [];
@@ -1803,24 +1966,32 @@
                 setCameraView(state.viewMode === 'INSIDE' ? 'OUTSIDE' : 'INSIDE');
             });
 
+            // Results panel
+            document.getElementById('showResultsBtn').addEventListener('click', () => {
+                document.getElementById('resultsPanel').classList.toggle('hidden');
+            });
+            document.getElementById('closeResultsPanel').addEventListener('click', () => {
+                document.getElementById('resultsPanel').classList.add('hidden');
+            });
+
             // Reset Button
             document.getElementById('resetSimBtn').addEventListener('click', () => {
                 state.temp = state.initTemp;
                 state.humidity = state.initHumidity;
-                state.co2 = state.initCo2;
-                state.o2 = state.initO2;
+                state.avgPressure = 101325;
+                state.avgDensity = 1.19;
                 state.elapsedSeconds = 0;
                 state.isRunning = false;
                 state.peopleCount = 0;
-                state.fanRpm = 287;
+                state.probeActive = false;
                 customPeoplePositions = [];
                 placedBoxes.forEach(b => roomGroup.remove(b));
                 placedBoxes = [];
                 exportHistory.length = 0;
                 lastExportRealTime = 0;
                 exitPlaceMode();
+                if (fdm.T) { fdmResetFields(); fdmBuildSolid(); }
                 resetHistoryData();
-                // Reset run button to stopped state
                 const rb = document.getElementById('toggleSimRunBtn');
                 rb.className = rb.className.replace('toggle-btn-active', 'toggle-btn-inactive');
                 document.getElementById('simRunIcon').className = 'fa-solid fa-play';
@@ -1828,8 +1999,7 @@
                 document.getElementById('sliderPeople').value = 0;
                 document.getElementById('valPeople').innerText = '0';
                 document.getElementById('probeResults').classList.add('hidden');
-                document.getElementById('sliderFanRpm').value = 287;
-                document.getElementById('valFanRpm').innerText = '287 RPM';
+                if (probeMarker) probeMarker.visible = false;
                 updatePeopleAvatars();
                 updateUI();
             });
@@ -1864,19 +2034,6 @@
             bindSlider('sliderLedWattage', 'valLedWattage', ' W', v => state.ledWattage = v);
             bindSlider('sliderPcPower', 'valPcPower', ' W', v => state.pcPower = v);
             bindSlider('sliderCpuUsage', 'valCpuUsage', ' %', v => state.cpuUsage = v);
-            bindSlider('sliderFanRpm', 'valFanRpm', ' RPM', v => {
-                state.fanRpm = v;
-                state.fanAutoMode = false;
-                updateFanAutoBtn();
-            });
-
-            // Fan Auto Mode Toggle
-            const fanAutoBtn = document.getElementById('toggleFanAutoBtn');
-            fanAutoBtn.addEventListener('click', () => {
-                state.fanAutoMode = !state.fanAutoMode;
-                updateFanAutoBtn();
-            });
-
             // Occupancy Slider
             bindSlider('sliderPeople', 'valPeople', '', v => {
                 state.peopleCount = parseInt(v);
@@ -1916,25 +2073,6 @@
                     updateUI();
                 }
             });
-            document.getElementById('sliderInitCo2').addEventListener('input', e => {
-                state.initCo2 = parseFloat(e.target.value);
-                document.getElementById('valInitCo2').innerText = Math.round(state.initCo2) + ' ppm';
-                if (!state.isRunning) {
-                    state.co2 = state.initCo2;
-                    resetHistoryData();
-                    updateUI();
-                }
-            });
-            document.getElementById('sliderInitO2').addEventListener('input', e => {
-                state.initO2 = parseFloat(e.target.value);
-                document.getElementById('valInitO2').innerText = state.initO2.toFixed(2) + ' %';
-                if (!state.isRunning) {
-                    state.o2 = state.initO2;
-                    resetHistoryData();
-                    updateUI();
-                }
-            });
-
             // Placement coordinate sliders
             document.getElementById('sliderPlaceX').addEventListener('input', e => {
                 state.placeX = parseFloat(e.target.value);
@@ -1982,6 +2120,7 @@
                     document.getElementById('sliderPeople').value = state.peopleCount;
                     document.getElementById('valPeople').innerText = state.peopleCount;
                     updatePeopleAvatars();
+                    if (fdm.T) fdmBuildSolid();
                 }
             });
             document.getElementById('removeBoxBtn').addEventListener('click', () => {
@@ -2083,6 +2222,7 @@
                 state.roomDepth  = parseFloat(document.getElementById('sliderRoomD').value);
                 rebuildRoom();
                 setCameraView(state.viewMode);
+                if (fdm.T) { fdmResetFields(); fdmBuildSolid(); }
             });
 
             // Sofa position sliders — live update
@@ -2090,11 +2230,13 @@
                 state.sofaSceneX = parseFloat(e.target.value);
                 document.getElementById('valSofaX').innerText = state.sofaSceneX.toFixed(2);
                 if (sofaGroup) sofaGroup.position.x = state.sofaSceneX;
+                if (fdm.T) fdmBuildSolid();
             });
             document.getElementById('sliderSofaZ').addEventListener('input', e => {
                 state.sofaSceneZ = parseFloat(e.target.value);
                 document.getElementById('valSofaZ').innerText = state.sofaSceneZ.toFixed(2);
                 if (sofaGroup) sofaGroup.position.z = state.sofaSceneZ;
+                if (fdm.T) fdmBuildSolid();
             });
 
             // Desk position sliders — live update
@@ -2114,18 +2256,6 @@
             });
         }
 
-        function updateFanAutoBtn() {
-            const btn = document.getElementById('toggleFanAutoBtn');
-            const txt = document.getElementById('fanAutoText');
-            if (state.fanAutoMode) {
-                btn.className = "w-full py-1.5 px-3 rounded-lg text-xs font-medium border border-emerald-500/40 text-emerald-300 bg-emerald-950/40 hover:bg-emerald-900/50 transition flex items-center justify-center gap-2";
-                txt.innerText = "Fan Auto Mode: ON";
-            } else {
-                btn.className = "w-full py-1.5 px-3 rounded-lg text-xs font-medium border border-slate-600 text-slate-400 bg-slate-800/40 hover:bg-slate-800 transition flex items-center justify-center gap-2";
-                txt.innerText = "Fan Auto Mode: OFF";
-            }
-        }
-
         function bindSlider(sliderId, labelId, unit, callback) {
             const slider = document.getElementById(sliderId);
             const label = document.getElementById(labelId);
@@ -2142,26 +2272,21 @@
             requestAnimationFrame(animate);
 
             const now = performance.now();
-            const dt = (now - lastTime) / 1000;
+            const dt = Math.min((now - lastTime) / 1000, 0.1); // cap at 100ms
             lastTime = now;
 
-            // Physics tick update
             updatePhysics(dt);
-
-            // Dynamically check wall transparency in Outside View
             updateWallVisibilityOutside();
+            updateProbeDisplay(); // auto-refresh probe values every frame
 
-            // Orbit controls & render
             controls.update();
             renderer.render(scene, camera);
         }
 
-        // Initialize application on window load
         window.onload = () => {
             init3D();
             setupEventListeners();
-            document.getElementById('valInitO2').innerText = state.initO2.toFixed(2) + ' %';
-            // Set sidebar bottom to match footer with charts expanded
+            fdmInitFields();
             document.getElementById('controlsSidebar').style.bottom = '210px';
             updateUI();
             animate();
