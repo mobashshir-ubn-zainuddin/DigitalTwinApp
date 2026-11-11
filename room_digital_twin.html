@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -120,6 +120,9 @@
             <button id="downloadExcelBtn" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white transition-all flex items-center gap-2" title="Download simulation results as Excel">
                 <i class="fa-solid fa-file-excel"></i> Export Excel
             </button>
+            <button id="heatmapBtn" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-orange-700 hover:bg-orange-600 text-white transition-all flex items-center gap-2" title="Toggle temperature heatmap view">
+                <i class="fa-solid fa-fire-flame-simple"></i> <span id="heatmapBtnText">Heat Map</span>
+            </button>
             <button id="toggleViewBtn" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md shadow-blue-900/40 flex items-center gap-2">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> <span id="toggleViewText">Step Outside</span>
             </button>
@@ -131,6 +134,15 @@
 
     <!-- 3D Canvas Background Container -->
     <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+    <!-- Temperature Color Scale Legend (shown in heat map mode) -->
+    <div id="tempColorScale" class="hidden absolute z-20 glass-panel rounded-xl p-2 flex flex-col items-center gap-0.5" style="right:22rem;top:4.5rem;width:52px">
+        <span class="text-[9px] font-bold text-white tracking-wider">°C</span>
+        <span id="tempScaleMax" class="text-[9px] font-mono font-bold text-red-400">35</span>
+        <canvas id="tempScaleCanvas" width="20" height="150" style="border-radius:4px;width:20px;height:150px;display:block"></canvas>
+        <span id="tempScaleMin" class="text-[9px] font-mono font-bold text-blue-400">22</span>
+        <span class="text-[8px] text-slate-500 text-center leading-tight mt-0.5">Temp<br>map</span>
+    </div>
 
     <!-- Right Control Panel Sidebar -->
     <aside id="controlsSidebar" class="absolute top-16 right-5 bottom-24 w-80 z-20 glass-panel rounded-2xl p-4 flex flex-col justify-between overflow-y-auto">
@@ -180,6 +192,28 @@
                         <span id="valInfiltration" class="text-blue-400 font-semibold">0.50 ACH</span>
                     </div>
                     <input type="range" id="sliderInfiltration" min="0" max="5" step="0.1" value="0.5">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>Ext. Air Pressure</span>
+                        <span id="valExtPressure" class="text-blue-400 font-semibold">101325 Pa</span>
+                    </div>
+                    <input type="range" id="sliderExtPressure" min="95000" max="106000" step="100" value="101325">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-medium text-slate-300">
+                        <span>Wind Velocity</span>
+                        <span id="valExtVelocity" class="text-blue-400 font-semibold">0.0 m/s</span>
+                    </div>
+                    <input type="range" id="sliderExtVelocity" min="0" max="15" step="0.1" value="0">
+                </div>
+
+                <!-- External air density (read-only, derived) -->
+                <div class="bg-slate-900/50 rounded-lg p-1.5 border border-slate-700/40">
+                    <div class="text-[10px] font-semibold text-blue-300 mb-0.5">External air density (derived)</div>
+                    <div class="text-[11px] font-mono font-bold text-white" id="valExtDensity">1.148 kg/m³</div>
                 </div>
             </div>
 
@@ -720,6 +754,14 @@
             doorAngle: 0,
             simSpeed: 108,
 
+            // External extended conditions
+            extPressure: 101325,
+            extVelocity: 0.0,
+            extDensity: 1.148,
+
+            // Visualisation mode
+            heatmapMode: false,
+
             // Room dimensions (editable via Layout Editor)
             roomWidth: 6.0, roomHeight: 3.2, roomDepth: 5.0,
             // Furniture positions (scene coords)
@@ -926,7 +968,11 @@
             // AC params
             const acOn=state.acState;
             const Tac=state.acSetpoint;
-            const omAC=humRatioFromRH(Tac, 50);
+            // AC supply humidity: coil cools air to near dew point, then reheats to setpoint.
+            // Supply omega is capped at the user's initial conditions so AC never humidifies above
+            // the configured starting point, preventing runaway RH accumulation.
+            const initOm = humRatioFromRH(state.initTemp, state.initHumidity);
+            const omAC = Math.min(humRatioFromRH(Tac-10, 90), initOm * 1.2);
             const dtAC=Math.max(1, state.temp-Tac);
             const vAC=Math.min(2.5, state.acCapacity/(cp*rhoA*dtAC*dx*dy));
             const ACi=Math.min(NX-1,Math.max(0,Math.round((0+W/2)/dx)-1));
@@ -990,8 +1036,16 @@
                 if (k===0) ST+=kW*(state.extTemp-T)/(dz*rhoA*cp);
                 if (k===NZ-1) ST+=kW*(state.extTemp-T)/(dz*rhoA*cp);
                 if (j===NY-1) ST+=kW*(state.extTemp-T)/(dy*rhoA*cp);
-                // Door exchange (front wall centre)
-                if (k===NZ-1 && Math.abs((i+0.5)*dx-W/2)<0.7) ST+=doorF*0.4*(state.extTemp-T)/(rhoA*cp*dz);
+                // Door exchange — driven by pressure difference, density difference (stack effect),
+                // temperature difference, and humidity difference between inside and outside
+                if (k===NZ-1 && Math.abs((i+0.5)*dx-W/2)<0.7) {
+                    const rhoCell = cellDensity(T, om);
+                    const rhoExt  = cellDensity(state.extTemp, extOm);
+                    const dRhoFactor = Math.min(5, Math.abs(rhoExt - rhoCell) / 1.2 * 15);
+                    const dPFactor   = Math.min(5, Math.abs(state.extPressure - fdm.P[fdmIdx(i,j,k)]) / 80);
+                    const exchF = 0.4 * (1.0 + dRhoFactor + dPFactor);
+                    ST += doorF * exchF * (state.extTemp - T) / (rhoA * cp * dz);
+                }
                 // People heat
                 for (let p=0;p<state.peopleCount;p++) {
                     const pp=getPersonRoomPos(p);
@@ -1016,15 +1070,27 @@
                 // Moisture sources
                 let Som=0;
                 if (i===0||i===NX-1||k===0) Som+=(state.infiltrationACH/3600)*0.1*(extOm-om);
-                if (k===NZ-1) Som+=doorF*0.15*(extOm-om)/dz;
+                // Door moisture exchange — also scales with pressure and density difference
+                if (k===NZ-1 && Math.abs((i+0.5)*dx-W/2)<0.7) {
+                    const rhoCell2 = cellDensity(T, om);
+                    const rhoExt2  = cellDensity(state.extTemp, extOm);
+                    const dRhoF2 = Math.min(5, Math.abs(rhoExt2-rhoCell2)/1.2*15);
+                    const dPF2   = Math.min(5, Math.abs(state.extPressure-fdm.P[fdmIdx(i,j,k)])/80);
+                    Som += doorF * 0.15 * (1.0+dRhoF2+dPF2) * (extOm - om) / dz;
+                }
                 for (let p=0;p<state.peopleCount;p++) {
                     const pp=getPersonRoomPos(p);
                     const pi=Math.min(NX-1,Math.max(0,Math.floor((pp.x+W/2)/dx)));
                     const pk=Math.min(NZ-1,Math.max(0,Math.floor((D/2-pp.z)/dz)));
                     if (pi===i && pk===k && j===0) Som+=1.1e-5/(rhoA*Vcell);
                 }
-                fdm.on[idx]=Math.max(extOm*0.25, om+dt*(aOm*lapOm-advOm+Som));
-                // Condensation
+                // AC dehumidification sink: when cell omega exceeds AC supply target, the AC
+                // system absorbs moisture. Rate scales with how wet the cell is vs AC target.
+                if (acOn && om > omAC) Som -= (om - omAC) * 0.012;
+                // Omega floor: use initial config humidity (not external), so AC maintains
+                // user-defined humidity rather than drifting toward external conditions
+                fdm.on[idx] = Math.max(initOm * 0.3, om + dt*(aOm*lapOm - advOm + Som));
+                // Condensation cap
                 const os=omSat(fdm.Tn[idx]); if (fdm.on[idx]>os) fdm.on[idx]=os;
 
                 // Velocity
@@ -1084,6 +1150,18 @@
             }
             if (state.temp>state.acSetpoint+0.2) state.acState=true;
             else if (state.temp<state.acSetpoint-0.2) state.acState=false;
+        }
+
+        // Compute and display external air density in the sidebar panel
+        function updateExtDensity() {
+            const T  = state.extTemp, P = state.extPressure, RH = state.extHumidity;
+            const pws = 610.78 * Math.exp(17.27*T/(T+237.3));
+            const pv  = Math.min((RH/100)*pws, P-1);
+            const Tk  = T + 273.15;
+            const rho = (P-pv)/(287.058*Tk) + pv/(461.495*Tk);
+            state.extDensity = rho;
+            const el = document.getElementById('valExtDensity');
+            if (el) el.innerText = rho.toFixed(3) + ' kg/m³';
         }
 
         // Update derived psychrometric display for Initial Conditions panel
@@ -1219,6 +1297,62 @@
         let originMarker = null;
         let probeMarker = null;
 
+        // Temperature heatmap visualization
+        let tempCubeGroup = null;
+        let tempCubeMeshes = [];
+
+        function buildTempCubes() {
+            if (tempCubeGroup) scene.remove(tempCubeGroup);
+            tempCubeGroup = new THREE.Group();
+            tempCubeMeshes = [];
+            const W=state.roomWidth, H=state.roomHeight, D=state.roomDepth;
+            const dx=W/FDM_NX, dy=H/FDM_NY, dz=D/FDM_NZ;
+            const geo = new THREE.BoxGeometry(dx*0.90, dy*0.90, dz*0.90);
+            for (let i=0; i<FDM_NX; i++) for (let j=0; j<FDM_NY; j++) for (let k=0; k<FDM_NZ; k++) {
+                const mat = new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.45 });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(-W/2+(i+0.5)*dx, (j+0.5)*dy, D/2-(k+0.5)*dz);
+                tempCubeGroup.add(mesh);
+                tempCubeMeshes.push(mesh);
+            }
+            tempCubeGroup.visible = false;
+            scene.add(tempCubeGroup);
+        }
+
+        function updateTempCubes() {
+            if (!fdm.T || !tempCubeGroup || !state.heatmapMode) return;
+            let Tmin=Infinity, Tmax=-Infinity;
+            for (let idx=0; idx<FDM_N; idx++) {
+                if (!fdm.solid[idx]) { const t=fdm.T[idx]; if(t<Tmin)Tmin=t; if(t>Tmax)Tmax=t; }
+            }
+            if (!isFinite(Tmin)) return;
+            if (Tmax - Tmin < 0.5) Tmax = Tmin + 1;
+
+            // Update scale labels
+            document.getElementById('tempScaleMax').innerText = Tmax.toFixed(1);
+            document.getElementById('tempScaleMin').innerText = Tmin.toFixed(1);
+            // Draw vertical gradient bar
+            const sc = document.getElementById('tempScaleCanvas');
+            const ctx = sc.getContext('2d');
+            for (let y=0; y<150; y++) {
+                const frac = 1 - y/149;
+                const hue = (1-frac)*240; // red at top (hot), blue at bottom (cold)
+                ctx.fillStyle = `hsl(${hue.toFixed(0)},100%,50%)`;
+                ctx.fillRect(0, y, 20, 1);
+            }
+            // Update cube colors
+            let n=0;
+            for (let i=0; i<FDM_NX; i++) for (let j=0; j<FDM_NY; j++) for (let k=0; k<FDM_NZ; k++) {
+                const mesh = tempCubeMeshes[n++];
+                const idx = fdmIdx(i,j,k);
+                if (fdm.solid[idx]) { mesh.visible=false; continue; }
+                mesh.visible = true;
+                const frac = Math.max(0,Math.min(1,(fdm.T[idx]-Tmin)/(Tmax-Tmin)));
+                const hue = (1-frac)*240/360;
+                mesh.material.color.setHSL(hue, 1.0, 0.5);
+            }
+        }
+
         // ROOM_DIM is reactive — reads from state so it always reflects the current room size
         const ROOM_DIM = {
             get width()  { return state.roomWidth; },
@@ -1281,6 +1415,9 @@
             probeMarker = new THREE.Mesh(probeGeo, probeMatM);
             probeMarker.visible = false;
             scene.add(probeMarker);
+
+            // Build temperature visualisation cubes (hidden by default)
+            buildTempCubes();
 
             // Set initial camera view
             setCameraView(state.viewMode);
@@ -2028,12 +2165,40 @@
                 }
             });
 
+            // Heat Map toggle
+            document.getElementById('heatmapBtn').addEventListener('click', () => {
+                state.heatmapMode = !state.heatmapMode;
+                if (tempCubeGroup) tempCubeGroup.visible = state.heatmapMode;
+                document.getElementById('tempColorScale').classList.toggle('hidden', !state.heatmapMode);
+                const btn = document.getElementById('heatmapBtn');
+                const txt = document.getElementById('heatmapBtnText');
+                if (state.heatmapMode) {
+                    btn.classList.replace('bg-orange-700','bg-orange-500');
+                    btn.classList.replace('hover:bg-orange-600','hover:bg-orange-400');
+                    txt.innerText = 'Normal View';
+                } else {
+                    btn.classList.replace('bg-orange-500','bg-orange-700');
+                    btn.classList.replace('hover:bg-orange-400','hover:bg-orange-600');
+                    txt.innerText = 'Heat Map';
+                }
+            });
+
             // Outdoor Sliders
-            bindSlider('sliderExtTemp', 'valExtTemp', '°C', v => state.extTemp = v);
-            bindSlider('sliderExtHumidity', 'valExtHumidity', '%', v => state.extHumidity = v);
+            bindSlider('sliderExtTemp', 'valExtTemp', '°C', v => { state.extTemp = v; updateExtDensity(); });
+            bindSlider('sliderExtHumidity', 'valExtHumidity', '%', v => { state.extHumidity = v; updateExtDensity(); });
             bindSlider('sliderWallPerm', 'valWallPerm', ' W/m²K', v => state.wallPermeability = v);
             bindSlider('sliderSunIntensity', 'valSunIntensity', ' W/m²', v => state.sunIntensity = v);
             bindSlider('sliderInfiltration', 'valInfiltration', ' ACH', v => state.infiltrationACH = v);
+            // New outdoor sliders
+            document.getElementById('sliderExtPressure').addEventListener('input', e => {
+                state.extPressure = parseFloat(e.target.value);
+                document.getElementById('valExtPressure').innerText = Math.round(state.extPressure) + ' Pa';
+                updateExtDensity();
+            });
+            document.getElementById('sliderExtVelocity').addEventListener('input', e => {
+                state.extVelocity = parseFloat(e.target.value);
+                document.getElementById('valExtVelocity').innerText = state.extVelocity.toFixed(1) + ' m/s';
+            });
 
             // Indoor Sliders
             bindSlider('sliderAcSetpoint', 'valAcSetpoint', ' °C', v => state.acSetpoint = v);
@@ -2238,6 +2403,7 @@
                 rebuildRoom();
                 setCameraView(state.viewMode);
                 if (fdm.T) { fdmResetFields(); fdmBuildSolid(); }
+            buildTempCubes(); // Rebuild heat map cubes to match new room dimensions
             });
 
             // Sofa position sliders — live update
@@ -2293,6 +2459,7 @@
             updatePhysics(dt);
             updateWallVisibilityOutside();
             updateProbeDisplay(); // auto-refresh probe values every frame
+            if (state.heatmapMode) updateTempCubes();
 
             controls.update();
             renderer.render(scene, camera);
@@ -2305,6 +2472,7 @@
             document.getElementById('controlsSidebar').style.bottom = '210px';
             updateUI();
             updateInitDerivedDisplay();
+            updateExtDensity();
             animate();
         };
     </script>
