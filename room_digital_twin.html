@@ -819,7 +819,7 @@
         // --- FDM 3D GRID PHYSICS ENGINE ---
         const FDM_NX = 10, FDM_NY = 6, FDM_NZ = 8;
         const FDM_N  = FDM_NX * FDM_NY * FDM_NZ;
-        const FDM_DT_MAX = 0.5;
+        const FDM_DT_MAX = 0.15;
 
         const fdm = {
             T:null, omega:null, u:null, v:null, w:null, P:null, solid:null,
@@ -1007,7 +1007,7 @@
                 // Infiltration moisture contribution to T
                 ST+=(state.infiltrationACH/3600)*0.08*(state.extTemp-T);
 
-                fdm.Tn[idx]=Math.max(10,Math.min(50, T+dt*(aT*lapT-advT+ST)));
+                fdm.Tn[idx]=Math.max(state.acSetpoint-2,Math.min(state.extTemp+6, T+dt*(aT*lapT-advT+ST)));
 
                 // Moisture sources
                 let Som=0;
@@ -1019,7 +1019,7 @@
                     const pk=Math.min(NZ-1,Math.max(0,Math.floor((D/2-pp.z)/dz)));
                     if (pi===i && pk===k && j===0) Som+=1.1e-5/(rhoA*Vcell);
                 }
-                fdm.on[idx]=Math.max(0, om+dt*(aOm*lapOm-advOm+Som));
+                fdm.on[idx]=Math.max(extOm*0.25, om+dt*(aOm*lapOm-advOm+Som));
                 // Condensation
                 const os=omSat(fdm.Tn[idx]); if (fdm.on[idx]>os) fdm.on[idx]=os;
 
@@ -1028,9 +1028,10 @@
                 const lapV=(Un_(i,j-1,k,'v')-2*v+Un_(i,j+1,k,'v'))/(dy*dy)+(Un_(i-1,j,k,'v')-2*v+Un_(i+1,j,k,'v'))/(dx*dx);
                 const lapW=(Un_(i,j,k-1,'w')-2*ww+Un_(i,j,k+1,'w'))/(dz*dz)+(Un_(i,j-1,k,'w')-2*ww+Un_(i,j+1,k,'w'))/(dy*dy);
                 const buoy=g*beta*(T-Tref);
-                fdm.un[idx]=Math.max(-3,Math.min(3, u+dt*(nu*lapU*0.08)));
-                fdm.vn[idx]=Math.max(-2,Math.min(2, v+dt*(nu*lapV*0.08+buoy*0.4)));
-                fdm.wn[idx]=Math.max(-3,Math.min(3, ww+dt*(nu*lapW*0.08)));
+                const damp=0.97;
+                fdm.un[idx]=Math.max(-0.8,Math.min(0.8, (u+dt*(nu*lapU*0.3))*damp));
+                fdm.vn[idx]=Math.max(-0.6,Math.min(0.6, (v+dt*(nu*lapV*0.3+buoy*0.05))*damp));
+                fdm.wn[idx]=Math.max(-0.8,Math.min(0.8, (ww+dt*(nu*lapW*0.3))*damp));
             }
 
             // AC injection — overwrite supply cells
@@ -1090,7 +1091,8 @@
             const pws=610.78*Math.exp(17.27*T/(T+237.3));
             const pv=om*P/(0.621945+om);
             const RH=Math.max(0,Math.min(100,pv/pws*100));
-            const lnR=Math.log(Math.max(pv,0.01)/610.78);
+            const pvSafe=Math.max(pv,10);
+            const lnR=Math.log(pvSafe/610.78);
             const Tdp=237.3*lnR/(17.27-lnR);
             const Twb=T*Math.atan(0.151977*Math.sqrt(RH+8.313659))+Math.atan(T+RH)-Math.atan(RH-1.676331)+0.00391838*Math.pow(RH,1.5)*Math.atan(0.023101*RH)-4.686035;
             const Tk=T+273.15;
