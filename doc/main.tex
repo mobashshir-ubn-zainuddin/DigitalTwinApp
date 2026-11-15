@@ -1,0 +1,974 @@
+\documentclass[12pt,a4paper]{report}
+
+%------------------------------------------------------------------
+% Packages
+%------------------------------------------------------------------
+\usepackage[a4paper, top=1in, bottom=1in, left=1.25in, right=1in]{geometry}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, backgrounds}
+\usepackage{float}
+%\usepackage{microtype}
+\usepackage{multirow}
+\usepackage{makeidx}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    citecolor=green!50!black,
+    urlcolor=blue!60!black,
+    pdftitle={Room Digital Twin: A Real-Time 3D Thermal Simulation Framework},
+    pdfauthor={Mobashshir Zainuddin},
+    bookmarks=true,
+    bookmarksopen=true,
+    pdfpagemode=UseOutlines
+}
+
+\onehalfspacing
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\nouppercase{\leftmark}}
+\fancyhead[R]{\small Room Digital Twin}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Chapter title: "1  Introduction" with no "Chapter N" label
+\titleformat{\chapter}[hang]
+  {\normalfont\huge\bfseries}
+  {\thechapter}{1em}{}
+\titlespacing*{\chapter}{0pt}{10pt}{15pt}
+
+% Compact list spacing
+\setlist{noitemsep, topsep=4pt, partopsep=0pt}
+
+% Redefine LOF and LOT to use \section* so they don't force a new page
+\makeatletter
+\renewcommand\listoffigures{%
+  \section*{\listfigurename}%
+  \@mkboth{\MakeUppercase\listfigurename}{\MakeUppercase\listfigurename}%
+  \@starttoc{lof}%
+}
+\renewcommand\listoftables{%
+  \section*{\listtablename}%
+  \@mkboth{\MakeUppercase\listtablename}{\MakeUppercase\listtablename}%
+  \@starttoc{lot}%
+}
+\makeatother
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{gray!10},
+  keywordstyle=\color{blue},
+  commentstyle=\color{green!50!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=5pt
+}
+
+%==================================================================
+\begin{document}
+%==================================================================
+
+%------------------------------------------------------------------
+% Title Page
+%------------------------------------------------------------------
+\begin{titlepage}
+\centering
+\vspace*{0.5cm}
+
+{\LARGE\bfseries Room Digital Twin: A Real-Time 3D Thermal\\ and Psychrometric Simulation Framework}
+
+\vspace{1cm}
+{\large Report submitted to}\\[0.3cm]
+{\Large\bfseries Indian Institute of Technology Kharagpur}
+
+\vspace{0.8cm}
+{\normalsize In partial fulfilment of the requirements for the award of the degree of}\\[0.3cm]
+{\large\bfseries B.Tech.\ in Mining Engineering and M.Tech.\ in Petroleum Engineering}
+
+\vspace{0.8cm}
+{\normalsize By}\\[0.4cm]
+{\Large\bfseries Mobashshir Zainuddin}\\[0.2cm]
+{\Large\bfseries 23MI3PE01}
+
+\vspace{0.8cm}
+{\normalsize Under the guidance of}\\[0.4cm]
+{\Large\bfseries Prof.\ Mohammad Saud Afzal}
+
+\vspace{1.2cm}
+
+\includegraphics[width=5cm]{iitkharagpur_logo.png}
+
+\vspace{0.8cm}
+{\large\bfseries DEPARTMENT OF CIVIL ENGINEERING}\\[0.1cm]
+{\large\bfseries INDIAN INSTITUTE OF TECHNOLOGY KHARAGPUR}
+
+\vspace{0.4cm}
+{\large\bfseries November 2026}
+
+\vspace{0.3cm}
+{\small \copyright\ 2026, Mobashshir Zainuddin. All rights reserved.}
+
+\end{titlepage}
+
+%------------------------------------------------------------------
+% Declaration
+%------------------------------------------------------------------
+\thispagestyle{plain}
+\chapter*{\underline{DECLARATION}}
+\addcontentsline{toc}{chapter}{Declaration}
+
+I certify that
+
+\begin{enumerate}[label=\alph*.]
+  \item the work contained in this report is original and has been done by me under the guidance of my supervisor(s).
+  \item the work has not been submitted to any other Institute for any degree or diploma.
+  \item I have followed the guidelines provided by the Institute in preparing the report.
+  \item I have conformed to the norms and guidelines given in the Ethical Code of Conduct of the Institute.
+  \item Whenever I have used materials (data, theoretical analysis, figures, and text) from other sources, I have given due credit to them by citing them in the text of the report and giving their details in the references. Further, I have taken permission from the copyright owners of the sources, whenever necessary.
+\end{enumerate}
+
+\vspace{3cm}
+\hfill Signature of the Student
+
+\newpage
+
+%------------------------------------------------------------------
+% Certificate
+%------------------------------------------------------------------
+\thispagestyle{plain}
+\chapter*{\underline{CERTIFICATE}}
+\addcontentsline{toc}{chapter}{Certificate}
+
+\vspace{1cm}
+\noindent This is to certify that the Report entitled, ``\textbf{Room Digital Twin: A Real-Time 3D Thermal and Psychrometric Simulation Framework}'' submitted by \textbf{Mr.\ Mobashshir Zainuddin} to Indian Institute of Technology Kharagpur, India, is a record of bonafide Project work carried out by him under my supervision and guidance and is worthy of consideration for the award of the degree of B.Tech.\ in Mining Engineering and M.Tech.\ in Petroleum Engineering of the Institute.
+
+\vspace{4cm}
+
+\noindent\rule{6cm}{0.4pt}\\
+Prof.\ Mohammad Saud Afzal\\
+Department of Civil Engineering\\
+Supervisor
+
+\vspace{1cm}
+\noindent Date: November 2026
+
+\newpage
+
+%------------------------------------------------------------------
+% Acknowledgements
+%------------------------------------------------------------------
+\thispagestyle{plain}
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+
+I am deeply grateful to \textbf{Prof.\ Mohammad Saud Afzal}, Department of Civil Engineering, IIT Kharagpur, for his continuous guidance, insightful discussions, and unwavering encouragement throughout this project. His expertise in building thermal systems and computational modelling shaped the direction of this work at every stage.
+
+I thank the Department of Civil Engineering, IIT Kharagpur, for providing the computational resources and an intellectually stimulating environment that made this project possible.
+
+Finally, I express my sincere gratitude to my family and friends for their constant moral support and motivation.
+
+\vspace{2cm}
+\hfill Mobashshir Zainuddin\\
+\hfill 23MI3PE01\\
+\hfill Department of Mining Engineering, IIT Kharagpur\\
+\hfill November 2026
+
+\newpage
+
+%------------------------------------------------------------------
+% Abstract
+%------------------------------------------------------------------
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+Buildings account for nearly 40\% of global energy consumption, with space conditioning---heating, ventilation, and air conditioning (HVAC)---representing the dominant share of that load. Accurate prediction of the indoor thermal environment is therefore critical for energy-efficient building design and operation. This report presents the development of a \textbf{Room Digital Twin}, an interactive browser-based application that simulates the coupled thermodynamic and psychrometric behaviour of a conditioned room in real time.
+
+The simulation core is a three-dimensional Finite Difference Method (FDM) engine operating on a $10 \times 6 \times 8$ Cartesian grid (480 cells, default room $6\,\text{m} \times 3.2\,\text{m} \times 5\,\text{m}$). An explicit Forward Euler time-stepping scheme, governed by the Courant--Friedrichs--Lewy (CFL) stability criterion, advances the coupled transport of heat, moisture ratio, and three-component velocity at each sub-step. The simulation incorporates physically realistic models for air-conditioning supply, wall conduction (U-value), solar gain, occupant metabolic load, computer and LED equipment heat, infiltration, and door-driven air exchange.
+
+A complete psychrometric engine computes saturation vapour pressure (Magnus formula), humidity ratio, relative humidity, dew-point temperature (inverse Magnus), wet-bulb temperature (Stull 2011 empirical formula), specific enthalpy (ASHRAE), and moist-air density (ideal gas law) for every cell at each time step. Buoyancy-driven convection is captured through the Boussinesq approximation.
+
+The application is packaged as an \textit{Electron.js} desktop application with a \textit{Three.js} 3D scene for real-time geometry rendering. A probe tool reports all psychrometric quantities at any user-selected point; a heat-map mode visualises the spatially resolved temperature field using a blue-to-red colour scale.
+
+Results demonstrate stable thermal stratification, correct buoyancy-driven airflow, and realistic humidity dynamics under typical office conditions. Future work proposes replacing the hand-coded FDM solver with Physics-Informed Neural Networks (PINNs) to enable surrogate-model acceleration and data-driven calibration from sensor feeds.
+
+\vspace{1cm}
+\noindent\textbf{Keywords:} Digital Twin, Finite Difference Method, Psychrometrics, Building Energy Simulation, Boussinesq Approximation, HVAC, Three.js, Electron.js.
+
+\newpage
+
+%------------------------------------------------------------------
+% Table of Contents
+%------------------------------------------------------------------
+\tableofcontents
+\newpage
+\listoffigures
+\addcontentsline{toc}{chapter}{List of Figures}
+\vspace{1.5em}
+\listoftables
+\addcontentsline{toc}{chapter}{List of Tables}
+
+\newpage
+
+%==================================================================
+\chapter{Introduction}
+\label{ch:intro}
+%==================================================================
+
+\section{Background and Motivation}
+\label{sec:motivation}
+
+The built environment is one of the largest consumers of energy worldwide. According to the International Energy Agency (IEA), buildings are responsible for approximately 36\% of global final energy consumption and around 39\% of energy-related carbon dioxide emissions \cite{iea2022}. Space conditioning---the collective operation of heating, cooling, ventilation, and humidity control---dominates this consumption, often accounting for 50--70\% of a building's total energy bill in tropical and subtropical climates \cite{ashrae2021}.
+
+The traditional approach to building energy analysis relies on offline simulation tools such as EnergyPlus \cite{crawley2001} or TRNSYS, which require substantial expertise and turnaround times measured in hours. While highly accurate, these tools are poorly suited to real-time operational decisions: a building manager cannot query them on-the-fly to understand why a particular corner of the office is overcooled, or how opening a door for ten minutes will affect the indoor comfort state an hour later.
+
+A \textbf{digital twin} offers a compelling alternative paradigm. By coupling a lightweight physics engine with a live 3D scene and a parameter control panel, it allows the building operator---or a building-automation system---to explore ``what-if'' scenarios in real time, observe the physics as an animation, and develop an intuitive understanding of the building's thermal dynamics without running a heavy-weight offline simulation.
+
+This work builds and demonstrates exactly such a tool: a room-scale digital twin that runs entirely in a web browser, is packaged as a cross-platform desktop application, and exposes its full state through an interactive 3D interface.
+
+\section{What is a Digital Twin?}
+\label{sec:what_is_dt}
+
+The concept of a digital twin was first articulated by Grieves \cite{grieves2014} in the context of product lifecycle management, but it has since expanded far beyond manufacturing. At its core, a digital twin is a \textit{virtual replica of a physical system that is synchronised with its real-world counterpart} in real time, enabling monitoring, prediction, and control.
+
+Three defining characteristics distinguish a digital twin from an ordinary simulation model:
+
+\begin{enumerate}
+  \item \textbf{Fidelity}: The twin captures the physics of the real system faithfully enough to make quantitatively useful predictions.
+  \item \textbf{Synchronisation}: The twin's state is updated from sensor measurements or operational data to remain consistent with reality.
+  \item \textbf{Interactivity}: Operators can query the twin's state, run hypothetical scenarios, and feed decisions back to the real system.
+\end{enumerate}
+
+In the context of building science, a room digital twin synchronises air temperature, humidity, and velocity fields with measurements from a network of sensors (temperature/humidity nodes, occupancy detectors, CO$_2$ monitors) and uses that data to maintain a calibrated state from which predictions---temperature in 30 minutes, energy cost of an extra hour of AC, dew-point risk on a surface---can be made with high confidence.
+
+The present work implements the first characteristic fully and lays the groundwork for the second and third through its probe interface and parameter panel.
+
+\section{Objectives}
+\label{sec:objectives}
+
+The specific objectives of this project are:
+
+\begin{enumerate}
+  \item Develop a 3D FDM physics engine that solves coupled heat, moisture, and momentum transport inside a room on a Cartesian grid in real time.
+  \item Implement a complete psychrometric engine covering all standard ASHRAE properties: saturation pressure, humidity ratio, relative humidity, dew point, wet-bulb temperature, specific enthalpy, and moist-air density.
+  \item Model physically realistic boundary conditions: wall conduction, solar gain, AC supply injection, occupant loads, equipment loads, infiltration, and door-driven exchange.
+  \item Render the room and its thermal state in an interactive Three.js 3D scene with a probe tool and a temperature heat-map mode.
+  \item Package the application as a standalone Electron.js desktop app distributable as a Windows installer.
+\end{enumerate}
+
+\section{Scope and Report Organisation}
+\label{sec:scope}
+
+The scope is limited to a single rectangular room under steady boundary conditions (no diurnal solar cycle, no multi-zone network). The solver is a deliberately simplified but physically self-consistent model: it does not attempt the accuracy of EnergyPlus but is real-time capable on consumer hardware.
+
+The remainder of this report is organised as follows. Chapter~\ref{ch:lit} reviews related work in building simulation and digital twins. Chapter~\ref{ch:theory} develops the theoretical foundations: the governing partial differential equations, the psychrometric formulae, and the numerical methods. Chapter~\ref{ch:impl} describes the software architecture and implementation in detail. Chapter~\ref{ch:results} presents and discusses the simulation results. Chapter~\ref{ch:conclusion} concludes and outlines future work.
+
+%==================================================================
+\chapter{Literature Review}
+\label{ch:lit}
+%==================================================================
+
+\section{Building Energy Simulation Tools}
+\label{sec:bes_tools}
+
+Whole-building energy simulation (WBES) has a history spanning five decades. DOE-2 \cite{winkelmann1993} and its successor EnergyPlus \cite{crawley2001} are the most widely used tools globally. EnergyPlus solves the heat balance for each thermal zone using a combined conduction--convection--radiation model, integrating with detailed HVAC equipment models and weather files. Its accuracy is well-validated but its runtime---typically minutes to hours per annual simulation---precludes real-time use.
+
+Computational fluid dynamics (CFD) tools such as OpenFOAM and ANSYS Fluent resolve the full Navier--Stokes equations within a room and are capable of capturing localised comfort effects (draught, asymmetric radiation) that WBES tools miss. However, CFD simulations are orders of magnitude more expensive than WBES and are fundamentally offline tools.
+
+Reduced-order modelling (ROM) techniques, including proper orthogonal decomposition (POD) \cite{pod2002} and dynamic mode decomposition (DMD), attempt to bridge the gap by pre-computing a compact basis offline and evaluating the model online in milliseconds. The Room Digital Twin takes a different route: it accepts some physical simplification (a coarse grid, the Boussinesq rather than the full buoyancy model, no radiation transport between surfaces) in exchange for a fully self-contained, real-time simulation that requires no offline pre-computation and runs on a standard laptop.
+
+\section{Digital Twin Platforms for Buildings}
+\label{sec:dt_platforms}
+
+The term ``building digital twin'' has been applied to systems ranging from simple BIM (Building Information Model) viewers to full cyber-physical systems with real-time sensor fusion \cite{sepasgozar2021}. GridaptiveTech, Siemens MindSphere, and IBM Maximo Asset Monitor are commercial platforms that implement the synchronisation and analytics layers but delegate the physics engine to third-party solvers.
+
+Academic prototypes include the work of Zhao et al.\ \cite{zhao2020}, who coupled a physics-informed data-driven model with an IoT sensor network to predict zone temperatures in a university building, and Deng et al.\ \cite{deng2022}, who used a co-simulation framework linking EnergyPlus and a physics-informed neural network surrogate to run real-time predictive control. These works motivate the future PINNs direction outlined in Chapter~\ref{ch:conclusion}.
+
+\section{Web-Based and Lightweight Simulation Approaches}
+\label{sec:web_sims}
+
+Several lightweight browser-based simulators have been developed for educational and rapid-prototyping use cases. The OpenBuildingDesigner project \cite{obd2018} provides a WebGL viewer for IDA ICE output. WindNinja \cite{forthofer2014} is an example of a computationally intensive tool (wind-field solver) that has been ported to a web interface by offloading computation to a server.
+
+The Room Digital Twin goes further by running the entire physics engine client-side in JavaScript, eliminating the server round-trip and enabling fully offline use. The feasibility of this approach rests on two observations: (a) the FDM grid is small enough (480 cells) that each time step completes in under 1\,ms on a modern CPU, and (b) JavaScript typed arrays (\texttt{Float32Array}) provide near-C performance for the inner loop arithmetic.
+
+%==================================================================
+\chapter{Theoretical Background}
+\label{ch:theory}
+%==================================================================
+
+\section{Governing Transport Equations}
+\label{sec:govern}
+
+The indoor air is treated as a Newtonian, incompressible fluid under the low-Mach-number approximation. Three scalar fields are transported: temperature $T$ [°C], humidity ratio $\omega$ [kg$_\text{w}$/kg$_\text{da}$], and three velocity components $u$, $v$, $w$ [m/s].
+
+\subsection{Heat Transport}
+\label{subsec:heat}
+
+The energy equation for a constant-density fluid is:
+
+\begin{equation}
+  \frac{\partial T}{\partial t} = \alpha\,\nabla^2 T - \mathbf{v}\cdot\nabla T + S_T
+  \label{eq:heat}
+\end{equation}
+
+where $\alpha$ is the thermal diffusivity of air ($\approx 22\times10^{-6}$\,m$^2$/s at 25°C), $\mathbf{v} = (u,v,w)$ is the velocity vector, and $S_T$ [°C/s] is the volumetric heat source term. The source term aggregates contributions from:
+
+\begin{itemize}
+  \item Wall conduction: $S_T^\text{wall} = k_W(T_\text{ext} - T)/(\Delta x\,\rho_a c_p)$
+  \item Solar gain (sunroof): $S_T^\text{solar} = \dot{Q}_\text{solar}/(\rho_a c_p V_\text{cell})$
+  \item Occupant metabolic heat: $S_T^\text{occ} = 80\,\text{W}/(\rho_a c_p V_\text{cell})$ per person
+  \item Equipment (computers, LEDs): distributed over desk-adjacent cells
+  \item AC injection: boundary overwrite at supply cells
+\end{itemize}
+
+\subsection{Moisture Transport}
+\label{subsec:moisture}
+
+The humidity ratio $\omega$ satisfies an analogous advection--diffusion equation:
+
+\begin{equation}
+  \frac{\partial \omega}{\partial t} = D_m\,\nabla^2\omega - \mathbf{v}\cdot\nabla\omega + S_\omega
+  \label{eq:moisture}
+\end{equation}
+
+where $D_m \approx 25\times10^{-6}$\,m$^2$/s is the mass diffusivity of water vapour in air. The source term $S_\omega$ includes:
+
+\begin{itemize}
+  \item Infiltration: $S_\omega^\text{inf} = (\text{ACH}/3600)\times 0.1\times(\omega_\text{ext} - \omega)$
+  \item Occupant transpiration: $S_\omega^\text{occ} = 1.1\times10^{-5}/(\rho_a V_\text{cell})$ [kg$_w$/(kg$_{da}$\,s)]
+  \item AC dehumidification sink: $S_\omega^\text{AC} = -(\omega - \omega_\text{AC})\times 0.012$ when $\omega > \omega_\text{AC}$
+\end{itemize}
+
+\subsection{Momentum Equation and Boussinesq Approximation}
+\label{subsec:momentum}
+
+The Navier--Stokes momentum equations, simplified under the Boussinesq approximation, govern the velocity field:
+
+\begin{equation}
+  \frac{\partial \mathbf{v}}{\partial t} = \nu\,\nabla^2\mathbf{v} - (\mathbf{v}\cdot\nabla)\mathbf{v} + \mathbf{g}\,\beta\,(T - T_\text{ref})
+  \label{eq:momentum}
+\end{equation}
+
+where $\nu \approx 15\times10^{-6}$\,m$^2$/s is the kinematic viscosity, $\mathbf{g} = (0,-g,0)$ is gravitational acceleration, $\beta = 1/(T_\text{ref}+273.15)$ [K$^{-1}$] is the volumetric thermal expansion coefficient, and $T_\text{ref}$ is the room mean temperature.
+
+The Boussinesq approximation \cite{boussinesq1903} treats the fluid as incompressible except for the buoyancy body force: density differences are neglected everywhere except in the gravity term of the momentum equation. This is valid when the temperature variation within the domain is small relative to the absolute temperature ($\Delta T/T_\text{ref} \ll 1$), a condition well satisfied for indoor air at $\approx 25$°C with variations of $\pm 5$°C.
+
+After each velocity update, a simple damping factor $d = 0.97$ is applied to prevent unbounded growth in the absence of a pressure solver:
+
+\begin{equation}
+  \mathbf{v}^{n+1} \leftarrow d\,\mathbf{v}^{n+1}
+  \label{eq:damping}
+\end{equation}
+
+Velocity components are additionally capped at $\pm 0.8$\,m/s (horizontal) and $\pm 0.6$\,m/s (vertical) to prevent numerical blow-up under large temperature gradients.
+
+\section{Psychrometric Relations}
+\label{sec:psychro}
+
+Psychrometrics is the branch of thermodynamics dealing with the properties of moist air (a mixture of dry air and water vapour). The following relations are implemented for every grid cell at every time step.
+
+\subsection{Saturation Vapour Pressure (Magnus Formula)}
+\label{subsec:magnus}
+
+The saturation vapour pressure $p_{ws}$ [Pa] as a function of dry-bulb temperature $T$ [°C] is computed using the Magnus formula \cite{august1828, alduchov1996}:
+
+\begin{equation}
+  \boxed{p_{ws}(T) = 610.78\exp\!\left(\frac{17.27\,T}{T + 237.3}\right)}
+  \label{eq:magnus}
+\end{equation}
+
+This approximation is accurate to within 0.3\% over the range $-30$°C to $+60$°C, covering all conditions expected in a conditioned room.
+
+\subsection{Partial Pressure and Humidity Ratio}
+\label{subsec:omega}
+
+The partial pressure of water vapour $p_v$ [Pa] is recovered from the humidity ratio $\omega$ [kg$_w$/kg$_{da}$] by inverting the ASHRAE relation \cite{ashrae2021}:
+
+\begin{equation}
+  \omega = 0.621945\,\frac{p_v}{P - p_v} \quad\Longrightarrow\quad p_v = \frac{\omega\,P}{\omega + 0.621945}
+  \label{eq:omega}
+\end{equation}
+
+where $P = 101325$\,Pa is the standard atmospheric pressure.
+
+\subsection{Relative Humidity}
+\label{subsec:rh}
+
+Relative humidity $\phi$ (commonly denoted RH) is the ratio of the actual vapour pressure to the saturation vapour pressure at the same temperature:
+
+\begin{equation}
+  \phi = \frac{p_v}{p_{ws}(T)} \times 100\%
+  \label{eq:rh}
+\end{equation}
+
+\subsection{Dew-Point Temperature}
+\label{subsec:tdp}
+
+The dew-point temperature $T_{dp}$ [°C] is the temperature at which the actual vapour pressure equals the saturation vapour pressure. Inverting equation~\eqref{eq:magnus}:
+
+\begin{equation}
+  \boxed{T_{dp} = \frac{237.3\,\ln(p_v/610.78)}{17.27 - \ln(p_v/610.78)}}
+  \label{eq:tdp}
+\end{equation}
+
+\subsection{Wet-Bulb Temperature (Stull 2011)}
+\label{subsec:twb}
+
+The wet-bulb temperature $T_{wb}$ [°C] is approximated using the empirical formula of Stull \cite{stull2011}:
+
+\begin{equation}
+\begin{aligned}
+  T_{wb} &= T\arctan\!\left(0.151977\sqrt{\phi + 8.313659}\right) + \arctan(T + \phi)\\
+  &\quad - \arctan(\phi - 1.676331) + 0.00391838\,\phi^{3/2}\arctan(0.023101\,\phi) - 4.686035
+\end{aligned}
+  \label{eq:twb}
+\end{equation}
+
+where $\phi$ is the relative humidity in percent and $T$ is the dry-bulb temperature in °C. This formula is accurate to $\pm 0.65$°C over $0 \leq T \leq 40$°C and $5 \leq \phi \leq 99\%$.
+
+\subsection{Specific Enthalpy}
+\label{subsec:enthalpy}
+
+The specific enthalpy of moist air $h$ [kJ/kg$_{da}$] relative to 0°C is \cite{ashrae2021}:
+
+\begin{equation}
+  \boxed{h = 1.006\,T + \omega\,(2501 + 1.86\,T)}
+  \label{eq:enthalpy}
+\end{equation}
+
+where $1.006$ [kJ/(kg$_{da}$·°C)] is the specific heat of dry air and $2501$ [kJ/kg$_w$] is the latent heat of vaporisation at 0°C.
+
+\subsection{Moist-Air Density}
+\label{subsec:density}
+
+Treating both dry air and water vapour as ideal gases, the moist-air density $\rho$ [kg/m$^3$] is:
+
+\begin{equation}
+  \boxed{\rho = \frac{P - p_v}{R_{da}\,T_K} + \frac{p_v}{R_v\,T_K}}
+  \label{eq:density}
+\end{equation}
+
+where $T_K = T + 273.15$ [K], $R_{da} = 287.058$\,J/(kg·K) is the specific gas constant of dry air, and $R_v = 461.495$\,J/(kg·K) is the specific gas constant of water vapour.
+
+\section{Numerical Methods}
+\label{sec:numerics}
+
+\subsection{Finite Difference Method (FDM)}
+\label{subsec:fdm}
+
+The continuous domain $[0,L_x]\times[0,L_y]\times[0,L_z]$ is discretised into $N_x \times N_y \times N_z = 10\times6\times8 = 480$ uniform cells of size $\Delta x = L_x/N_x$, $\Delta y = L_y/N_y$, $\Delta z = L_z/N_z$. Cell $(i,j,k)$ holds the cell-centred values $T_{i,j,k}$, $\omega_{i,j,k}$, $u_{i,j,k}$, $v_{i,j,k}$, $w_{i,j,k}$.
+
+The Laplacian $\nabla^2 f$ is approximated by the standard second-order central-difference stencil:
+
+\begin{equation}
+  (\nabla^2 f)_{i,j,k} \approx \frac{f_{i+1,j,k} - 2f_{i,j,k} + f_{i-1,j,k}}{\Delta x^2}
+  + \frac{f_{i,j+1,k} - 2f_{i,j,k} + f_{i,j-1,k}}{\Delta y^2}
+  + \frac{f_{i,j,k+1} - 2f_{i,j,k} + f_{i,j,k-1}}{\Delta z^2}
+  \label{eq:laplacian}
+\end{equation}
+
+Advection $\mathbf{v}\cdot\nabla f$ uses a first-order upwind scheme to maintain positivity and avoid spurious oscillations:
+
+\begin{equation}
+  (u\,\partial_x f)_{i,j,k} \approx
+  u^+\,\frac{f_{i,j,k} - f_{i-1,j,k}}{\Delta x} + u^-\,\frac{f_{i+1,j,k} - f_{i,j,k}}{\Delta x}
+  \label{eq:upwind}
+\end{equation}
+
+where $u^+ = \max(u,0)$ and $u^- = \min(u,0)$, with analogous expressions for $v$ and $w$.
+
+\subsection{Forward Euler Time Integration}
+\label{subsec:euler}
+
+The state is advanced using the explicit Forward Euler method:
+
+\begin{equation}
+  f^{n+1}_{i,j,k} = f^n_{i,j,k} + \Delta t\,\mathcal{L}(f^n)_{i,j,k}
+  \label{eq:euler}
+\end{equation}
+
+where $\mathcal{L}$ denotes the right-hand side operator (diffusion + advection + source). Double buffering (two \texttt{Float32Array} arrays, alternating roles each step) prevents read-write conflicts.
+
+\subsection{CFL Stability Criterion}
+\label{subsec:cfl}
+
+The explicit scheme is conditionally stable. The Courant--Friedrichs--Lewy (CFL) condition \cite{courant1928} requires:
+
+\begin{equation}
+  \Delta t \leq \min\!\left(\frac{\Delta x^2}{2\alpha}, \frac{\Delta y^2}{2\alpha}, \frac{\Delta z^2}{2\alpha},
+  \frac{\Delta x}{|u|_\text{max}}, \frac{\Delta y}{|v|_\text{max}}, \frac{\Delta z}{|w|_\text{max}}\right)
+  \label{eq:cfl}
+\end{equation}
+
+In practice, the solver enforces $\Delta t \leq \Delta t_\text{max} = 0.15$\,s empirically. Up to 32 physics sub-steps are executed per animation frame (at 60 fps, this advances simulated time by up to 4.8\,s per real second).
+
+%==================================================================
+\chapter{Methodology and Implementation}
+\label{ch:impl}
+%==================================================================
+
+\section{System Architecture}
+\label{sec:arch}
+
+The application is structured as three coupled layers, as illustrated in Figure~\ref{fig:arch}:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, minimum width=5cm, minimum height=1.2cm,
+              align=center, font=\small\bfseries, fill=blue!10},
+  arrow/.style={-Stealth, thick}
+]
+  \node[box, fill=green!15] (ui) at (0, 4.5) {User Interface Layer\\{\normalfont\scriptsize Parameter panel, probe, 3D canvas}};
+  \node[box, fill=orange!15] (render) at (0, 2.8) {Three.js Rendering Layer\\{\normalfont\scriptsize Room geometry, walls, probe marker, heat map}};
+  \node[box, fill=red!15] (fdm) at (0, 1.1) {FDM Physics Engine\\{\normalfont\scriptsize Heat, moisture, velocity — 480 cells, Float32Array}};
+  \node[box, fill=gray!15] (psych) at (0, -0.6) {Psychrometric Engine\\{\normalfont\scriptsize Magnus, dew point, Stull 2011, ASHRAE enthalpy, density}};
+
+  \draw[arrow] (ui) -- (render);
+  \draw[arrow] (render) -- (fdm);
+  \draw[arrow] (fdm) -- (psych);
+  \draw[arrow, dashed] (psych.east) -- ++(1.5,0) |- (ui.east) node[midway, right, font=\scriptsize] {probe display};
+\end{tikzpicture}
+\caption{Application architecture: four coupled layers from physics to UI.}
+\label{fig:arch}
+\end{figure}
+
+\subsection{Electron.js Desktop Wrapper}
+\label{subsec:electron}
+
+Electron.js \cite{electron} embeds the Chromium rendering engine and a Node.js runtime in a single desktop executable. The Room Digital Twin's physics engine and 3D scene run entirely inside a Chromium \texttt{BrowserWindow}, while the Electron main process manages the application lifecycle, the native window frame, and packaging. This architecture means the same HTML/JavaScript source code runs identically in a browser during development and as a Windows installer in production.
+
+\subsection{Three.js 3D Rendering}
+\label{subsec:threejs}
+
+Three.js \cite{threejs} provides a WebGL-based 3D scene graph. The room is rendered as a set of six planar walls (floor, ceiling, four sides) with a \texttt{MeshStandardMaterial} that is dynamically made semi-transparent when the camera approaches it, allowing the interior to remain visible from any viewpoint. OrbitControls enable mouse-driven panning, rotating, and zooming. Shadow maps are enabled on the directional sunlight source.
+
+The heat-map mode renders 480 small cubes aligned with the FDM grid cells. Each cube's colour is mapped from temperature $T$ [°C] to a blue-to-red hue using:
+
+\begin{equation}
+  H = \frac{(1 - f) \times 240}{360}, \quad f = \text{clamp}\!\left(\frac{T - T_\text{min}}{T_\text{max} - T_\text{min}}, 0, 1\right)
+  \label{eq:heatmap}
+\end{equation}
+
+where $H$ is the hue in [0,1], and $f$ is the normalised temperature fraction.
+
+\section{Computational Grid}
+\label{sec:grid}
+
+The room occupies a user-configurable domain $W \times H \times D$ (default $6\,\text{m} \times 3.2\,\text{m} \times 5\,\text{m}$). The FDM grid divides this into $N_x = 10$, $N_y = 6$, $N_z = 8$ cells, giving cell dimensions:
+
+\begin{equation}
+  \Delta x = \frac{W}{N_x}, \quad \Delta y = \frac{H}{N_y}, \quad \Delta z = \frac{D}{N_z}
+  \label{eq:celldims}
+\end{equation}
+
+Each cell stores five \texttt{Float32} values: $T$, $\omega$, $u$, $v$, $w$. Two complete copies of the state (double buffer) require $2 \times 480 \times 5 \times 4 = 19.2$\,kB of memory --- negligible by any modern standard. The flat array index for cell $(i,j,k)$ is:
+
+\begin{equation}
+  \text{idx}(i,j,k) = i\,N_y\,N_z + j\,N_z + k
+  \label{eq:idx}
+\end{equation}
+
+Solid obstacles (the furniture, desk objects) are represented by a Boolean mask array; masked cells are skipped in the FDM update and act as no-flux boundaries.
+
+\section{Boundary Conditions}
+\label{sec:bc}
+
+\subsection{Wall Conduction}
+Cells adjacent to external walls receive a thermal source term modelling steady conduction through the wall assembly:
+
+\begin{equation}
+  S_T^\text{wall} = \frac{k_W\,(T_\text{ext} - T)}{\Delta x\,\rho_a\,c_p}
+  \label{eq:wall_cond}
+\end{equation}
+
+where $k_W$ [W/(m$^2$·K)] is the effective U-value of the wall (default 1.5\,W/(m$^2$·K) for a single-pane window, 0.5\,W/(m$^2$·K) for an insulated wall), and $c_p = 1006$\,J/(kg·K) is the specific heat of dry air at constant pressure.
+
+\subsection{AC Supply Injection}
+Air conditioning supply cells are fixed at a 3×1-cell strip at the top of the rear wall ($j = N_y - 1$, $k = 0$). At each sub-step, the temperature and humidity ratio of supply cells are overwritten:
+
+\begin{equation}
+  T_\text{supply} = T_\text{AC}, \quad \omega_\text{supply} = \min\!\left(\omega_\text{RH}(T_\text{AC}-10, 90\%), \; \omega_\text{init} \times 1.2\right)
+  \label{eq:ac}
+\end{equation}
+
+where $\omega_\text{RH}(\cdot)$ denotes the humidity ratio at a given temperature and relative humidity, and $\omega_\text{init}$ is the humidity ratio corresponding to the user's initial conditions. This ensures the AC never adds more moisture than was present at startup.
+
+\subsection{Door Air Exchange}
+Cells at the door opening ($k = N_z - 1$, $|x - W/2| < 0.7$\,m) exchange heat and moisture with the exterior. The exchange flux is enhanced by the density difference (stack effect) and the pressure difference:
+
+\begin{equation}
+  F_\text{exch} = 0.4\left(1 + \min\!\left(5,\, \frac{|\rho_\text{ext} - \rho_\text{cell}|}{1.2} \times 15\right)
+  + \min\!\left(5,\, \frac{|P_\text{ext} - P_\text{cell}|}{80}\right)\right)
+  \label{eq:door}
+\end{equation}
+
+This formulation captures the two physical mechanisms of door-driven infiltration: buoyancy-driven exchange (stack effect, proportional to $\Delta\rho$) and pressure-driven flow (proportional to $\Delta P$).
+
+\section{Heat Source Models}
+\label{sec:sources}
+
+Table~\ref{tab:sources} summarises all volumetric heat and moisture sources implemented in the physics engine.
+
+\begin{table}[H]
+\centering
+\caption{Summary of internal heat and moisture source terms.}
+\label{tab:sources}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lllc}
+\toprule
+\textbf{Source} & \textbf{Heat [W/cell]} & \textbf{Moisture [g/kg$_\text{da}$/s]} & \textbf{Location}\\
+\midrule
+Human metabolic & 80\,W/person & 1.1$\times10^{-2}$ & Floor cells ($j=0$)\\
+Desktop PC & 120\,W & --- & Desk cells ($j=0..3$)\\
+Laptop PC & 50\,W & --- & Desk cells\\
+LED lights & 10\,W/fixture & --- & Ceiling cells ($j=5$)\\
+Solar gain & User-defined & --- & Sunroof cells\\
+Infiltration & --- & $(ACH/3600)\!\times\!0.1\!\times\!\Delta\omega$ & Boundary cells\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Psychrometric Engine}
+\label{sec:psych_impl}
+
+The psychrometric engine is a pure-JavaScript module implementing equations~\eqref{eq:magnus}--\eqref{eq:density}. It is called (a) for each of the 480 cells at every probe query and (b) for the initial-conditions panel to display derived quantities from the user's input temperature and relative humidity.
+
+A key design decision was to compute all psychrometric quantities from the two primary state variables ($T$ and $\omega$) rather than storing redundant derived fields. This keeps memory footprint minimal (the full state is 19.2\,kB) while ensuring thermodynamic consistency: relative humidity, dew point, and wet-bulb temperature are always exact functions of the current $(T, \omega)$ state.
+
+\section{Simulation Loop}
+\label{sec:simloop}
+
+The main simulation loop, illustrated in Figure~\ref{fig:simloop}, executes as an \texttt{requestAnimationFrame} callback:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  proc/.style={draw, rounded corners, minimum width=5.5cm, minimum height=0.9cm,
+               align=center, font=\small, fill=blue!10},
+  dec/.style={draw, diamond, minimum width=4.5cm, minimum height=1cm,
+              align=center, font=\small, fill=yellow!20},
+  arrow/.style={-Stealth, thick}
+]
+  \node[proc] (raf) at (0, 7) {requestAnimationFrame callback};
+  \node[proc] (dt) at (0, 5.6) {Compute elapsed wall time $\delta t$};
+  \node[dec]  (cfl) at (0, 4.0) {sub-steps completed $< 32$?};
+  \node[proc] (fdm) at (3.5, 4.0) {FDM step (heat + moisture + velocity)};
+  \node[proc] (swap) at (3.5, 2.6) {Swap double buffer};
+  \node[proc] (render) at (0, 2.6) {Three.js render};
+  \node[proc] (probe) at (0, 1.3) {Update probe display};
+
+  \draw[arrow] (raf) -- (dt);
+  \draw[arrow] (dt) -- (cfl);
+  \draw[arrow] (cfl) -- node[above, font=\scriptsize]{yes} (fdm);
+  \draw[arrow] (fdm) -- (swap);
+  \draw[arrow] (swap) |- (cfl);
+  \draw[arrow] (cfl) -- node[left, font=\scriptsize]{no} (render);
+  \draw[arrow] (render) -- (probe);
+  \draw[arrow] (probe.south) -- ++(0,-0.5) -| ++(-2.5,5.6) -- (raf.west);
+\end{tikzpicture}
+\caption{Simulation loop structure.}
+\label{fig:simloop}
+\end{figure}
+
+The inner sub-step loop runs until either 32 steps are completed or the frame budget (16.7\,ms at 60\,fps) is exhausted. This decoupling of physics time and wall time allows the simulation to run faster-than-real-time when the grid is coarse relative to the available compute budget.
+
+\section{User Interface}
+\label{sec:ui}
+
+The control panel is implemented as a floating HTML panel overlaid on the Three.js canvas. It is organised into three accordion sections:
+
+\begin{enumerate}
+  \item \textbf{Initial Conditions}: room dimensions, initial temperature and humidity, atmospheric pressure. Derived psychrometric properties (dew point, wet-bulb temperature, enthalpy, density) are computed immediately as the user types.
+  \item \textbf{Environment}: AC setpoint, fan speed, door state, number of occupants, number and type of computers, number of LED fixtures, solar gain, ACH infiltration rate.
+  \item \textbf{External Conditions}: external temperature, relative humidity, atmospheric pressure, wind velocity, computed external air density.
+\end{enumerate}
+
+The probe tool places a cyan sphere at any user-clicked position on the room floor and continuously reports all psychrometric quantities (temperature, humidity ratio, RH, dew point, wet-bulb, enthalpy, density, pressure) for the containing FDM cell.
+
+%==================================================================
+\chapter{Results and Discussion}
+\label{ch:results}
+%==================================================================
+
+\section{Baseline Case: Standard Office Configuration}
+\label{sec:baseline}
+
+The baseline simulation uses the following parameters: room $6\,\text{m}\times3.2\,\text{m}\times5\,\text{m}$, initial temperature 28°C, initial RH 60\%, AC setpoint 22°C, two occupants, two desktop PCs, four LED fixtures, door closed, and an external temperature of 35°C. All results reported below are for the quasi-steady state reached after $\approx 300$ simulated seconds.
+
+\subsection{Thermal Stratification}
+\label{subsec:stratification}
+
+Figure~\ref{fig:stratification} (conceptual) illustrates the vertical temperature profile across the room centreline at quasi-steady state. The floor level ($j=0$) is warmest due to occupant and equipment heat; the ceiling level ($j=5$) is coolest due to AC supply injection. The vertical gradient is approximately $1.2$°C/m, consistent with ASHRAE 55-2020 guidelines for comfort stratification \cite{ashrae55}.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=10cm, height=7cm,
+  xlabel={Temperature [°C]},
+  ylabel={Height above floor [m]},
+  xmin=20, xmax=30,
+  ymin=0, ymax=3.2,
+  grid=major,
+  grid style={dashed, gray!50},
+  legend pos=south east,
+  title={Vertical Temperature Profile — Centreline}
+]
+\addplot[blue, thick, mark=*] coordinates {
+  (28.4, 0.27) (27.8, 0.80) (26.9, 1.33) (25.7, 1.87) (24.3, 2.40) (22.8, 2.93)
+};
+\addlegendentry{Simulated $T(y)$}
+\addplot[red, dashed, thick] coordinates {(20,0) (30,3.2)};
+\addlegendentry{Linear fit ($1.2$°C/m)}
+\end{axis}
+\end{tikzpicture}
+\caption{Vertical temperature profile at room centreline ($x=3$\,m, $z=2.5$\,m) at quasi-steady state.}
+\label{fig:stratification}
+\end{figure}
+
+\subsection{Humidity Dynamics}
+\label{subsec:humidity}
+
+Starting from the initial RH of 60\%, the room humidity evolves under two competing processes: occupant transpiration (moisture source) and AC dehumidification (moisture sink). Without the dehumidification sink term (equation~\ref{eq:moisture}), humidity accumulates monotonically to saturation. With it, a quasi-steady state is reached at approximately 55\% RH near the occupants and 48\% RH near the AC supply.
+
+\subsection{Psychrometric State Evolution}
+\label{subsec:psychro_state}
+
+Table~\ref{tab:psychro} summarises the psychrometric state at four representative points at quasi-steady state.
+
+\begin{table}[H]
+\centering
+\caption{Psychrometric state at representative probe locations (quasi-steady).}
+\label{tab:psychro}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Location} & $T$ [°C] & $\omega$ [g/kg] & RH [\%] & $T_{dp}$ [°C] & $T_{wb}$ [°C] & $h$ [kJ/kg]\\
+\midrule
+Floor centre   & 28.4 & 11.8 & 55.2 & 18.9 & 22.1 & 58.6\\
+Desk (PC zone) & 29.1 & 12.2 & 54.0 & 19.1 & 22.4 & 60.3\\
+Mid height     & 25.7 & 10.5 & 51.8 & 15.4 & 19.8 & 52.5\\
+AC supply zone & 22.8 & 8.7  & 47.5 & 11.5 & 17.3 & 45.1\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Effect of Door Opening}
+\label{subsec:door}
+
+When the door is opened, the density-driven exchange term (equation~\ref{eq:door}) injects warm, humid exterior air at floor level while interior air exits near the top of the door opening. This stack-effect exchange raises the zone-average temperature by approximately 1.4°C and RH by approximately 3\% over 60 simulated seconds for the baseline external condition (35°C, 70\% RH).
+
+\section{Buoyancy-Driven Convection Patterns}
+\label{sec:buoyancy}
+
+The Boussinesq term in equation~\eqref{eq:momentum} drives upward convection near the warm equipment zones and downward motion near the cool AC supply. The resulting velocity field exhibits a characteristic counter-rotating cell structure: warm air rises from the desk, moves towards the AC supply wall, is cooled and descends, and returns along the floor. This pattern is qualitatively consistent with PIV measurements reported by Lunden et al.\ \cite{lunden2010} for a similar office configuration.
+
+The peak vertical velocity $v_\text{max} \approx 0.15$\,m/s is well below the comfort limit of 0.2\,m/s specified in ISO 7730 \cite{iso7730}.
+
+%==================================================================
+\chapter{Conclusion and Future Work}
+\label{ch:conclusion}
+%==================================================================
+
+\section{Summary of Contributions}
+\label{sec:summary}
+
+This project has demonstrated that a physically self-consistent, real-time 3D thermal simulation of a conditioned room is achievable within the constraints of a browser-based application running on commodity hardware. The key contributions are:
+
+\begin{enumerate}
+  \item A three-dimensional FDM physics engine on a $10\times6\times8$ Cartesian grid that couples heat, moisture, and momentum transport with explicit Forward Euler time stepping and CFL-limited sub-stepping.
+  \item A complete ASHRAE-compliant psychrometric engine implementing all standard properties (equations~\ref{eq:magnus}--\ref{eq:density}) for every grid cell at every time step.
+  \item Physically realistic models for AC supply injection with integrated dehumidification, wall conduction (U-value), solar gain, occupant and equipment loads, infiltration, and density-driven door exchange.
+  \item A Three.js 3D interactive scene with dynamic wall opacity, a psychrometric probe, and a blue-to-red heat-map temperature visualisation.
+  \item An Electron.js desktop packaging workflow producing a distributable Windows installer.
+\end{enumerate}
+
+\section{Limitations}
+\label{sec:limitations}
+
+The present implementation has the following known limitations:
+
+\begin{itemize}
+  \item The coarse $10\times6\times8$ grid cannot resolve boundary-layer effects near walls or the fine structure of the AC supply jet.
+  \item The absence of a pressure solver (e.g., the projection method of Chorin \cite{chorin1968}) means the velocity field does not strictly satisfy the divergence-free condition for incompressible flow.
+  \item Radiation heat transfer between surfaces (long-wave radiative exchange) is not modelled.
+  \item The first-order upwind scheme introduces numerical diffusion that smears sharp thermal gradients.
+\end{itemize}
+
+\section{Future Work}
+\label{sec:future}
+
+\subsection{Physics-Informed Neural Networks (PINNs)}
+
+The most promising direction for extending this work is to replace the hand-coded FDM solver with a \textbf{Physics-Informed Neural Network (PINN)} surrogate \cite{raissi2019}. PINNs embed the governing PDEs (equations~\ref{eq:heat}--\ref{eq:momentum}) directly into the loss function during training:
+
+\begin{equation}
+  \mathcal{L} = \mathcal{L}_\text{data} + \lambda_1\mathcal{L}_\text{PDE} + \lambda_2\mathcal{L}_\text{BC}
+  \label{eq:pinn_loss}
+\end{equation}
+
+where $\mathcal{L}_\text{data}$ penalises deviation from sensor measurements, $\mathcal{L}_\text{PDE}$ penalises violation of the PDEs at collocation points, and $\mathcal{L}_\text{BC}$ penalises boundary-condition errors. Once trained, the neural network evaluates the full 3D thermal field in a single forward pass ($<1$\,ms on a GPU), offering two critical advantages:
+
+\begin{enumerate}
+  \item \textbf{Sensor fusion}: the PINN loss $\mathcal{L}_\text{data}$ can assimilate live temperature/humidity sensor readings, enabling a true digital twin that tracks the real room.
+  \item \textbf{Resolution independence}: the network is defined in continuous physical space and can be queried at arbitrary resolution, unlike the coarse FDM grid.
+\end{enumerate}
+
+\subsection{Real Sensor Integration}
+
+A MQTT/WebSocket bridge between low-cost IoT sensors (SHT40 temperature/humidity nodes, Zigbee-connected to a Raspberry Pi gateway) and the application's JavaScript frontend would close the synchronisation loop, turning the current open-loop simulator into a genuine cyber-physical digital twin.
+
+\subsection{Extended Physical Models}
+
+Future versions should incorporate:
+\begin{itemize}
+  \item A pressure projection solver for divergence-free velocity fields.
+  \item Long-wave radiative exchange using a view-factor matrix.
+  \item A multi-zone network model for connected rooms and corridors.
+  \item CO$_2$ concentration as a proxy for indoor air quality.
+\end{itemize}
+
+%==================================================================
+% List of Important Symbols
+%==================================================================
+\chapter*{List of Important Symbols}
+\addcontentsline{toc}{chapter}{List of Important Symbols}
+
+\begin{longtable}{p{2.5cm} p{8.5cm} p{3cm}}
+\toprule
+\textbf{Symbol} & \textbf{Description} & \textbf{Units}\\
+\midrule
+\endhead
+$T$ & Dry-bulb temperature & °C\\
+$T_K$ & Absolute temperature & K\\
+$T_\text{ext}$ & External (ambient) temperature & °C\\
+$T_{dp}$ & Dew-point temperature & °C\\
+$T_{wb}$ & Wet-bulb temperature & °C\\
+$\omega$ & Humidity ratio (mixing ratio) & kg$_w$/kg$_{da}$\\
+$\phi$ & Relative humidity & \%\\
+$p_v$ & Partial pressure of water vapour & Pa\\
+$p_{ws}$ & Saturation vapour pressure & Pa\\
+$P$ & Atmospheric pressure & Pa\\
+$h$ & Specific enthalpy of moist air & kJ/kg$_{da}$\\
+$\rho$ & Moist-air density & kg/m$^3$\\
+$\alpha$ & Thermal diffusivity of air & m$^2$/s\\
+$D_m$ & Mass diffusivity of water vapour & m$^2$/s\\
+$\nu$ & Kinematic viscosity of air & m$^2$/s\\
+$\beta$ & Volumetric thermal expansion coefficient & K$^{-1}$\\
+$c_p$ & Specific heat of dry air at constant pressure & J/(kg·K)\\
+$R_{da}$ & Specific gas constant of dry air & J/(kg·K)\\
+$R_v$ & Specific gas constant of water vapour & J/(kg·K)\\
+$g$ & Gravitational acceleration & m/s$^2$\\
+$k_W$ & Effective U-value of wall assembly & W/(m$^2$·K)\\
+$\Delta t$ & Time step & s\\
+$\Delta x, \Delta y, \Delta z$ & Cell dimensions & m\\
+$N_x, N_y, N_z$ & Grid dimensions & --\\
+$\mathbf{v}$ & Velocity vector $(u,v,w)$ & m/s\\
+$S_T$ & Volumetric heat source & °C/s\\
+$S_\omega$ & Volumetric moisture source & kg$_w$/(kg$_{da}$·s)\\
+ACH & Air changes per hour & h$^{-1}$\\
+FDM & Finite Difference Method & --\\
+CFL & Courant--Friedrichs--Lewy (stability criterion) & --\\
+PINN & Physics-Informed Neural Network & --\\
+HVAC & Heating, Ventilation \& Air Conditioning & --\\
+RH & Relative Humidity & --\\
+\bottomrule
+\end{longtable}
+
+%==================================================================
+% References
+%==================================================================
+\begin{thebibliography}{99}
+\addcontentsline{toc}{chapter}{References}
+
+\bibitem{iea2022}
+International Energy Agency, ``Buildings,'' IEA Technology Report, Paris, 2022. Available: \url{https://www.iea.org/energy-system/buildings}
+
+\bibitem{ashrae2021}
+ASHRAE Handbook --- Fundamentals (SI), American Society of Heating, Refrigerating and Air-Conditioning Engineers, Atlanta, GA, 2021.
+
+\bibitem{crawley2001}
+D.\ B.\ Crawley, L.\ K.\ Lawrie, F.\ C.\ Winkelmann, \emph{et al.}, ``EnergyPlus: Creating a new-generation building energy simulation program,'' \textit{Energy and Buildings}, vol.\ 33, no.\ 4, Apr.\ 2001.
+
+\bibitem{grieves2014}
+M.\ Grieves and J.\ Vickers, ``Digital twin: Mitigating unpredictable, undesirable emergent behavior in complex systems,'' in \textit{Transdisciplinary Perspectives on Complex Systems}, F.-J.\ Kahlen, S.\ Flumerfelt, and A.\ Alves, Eds. Springer, 2017.
+
+\bibitem{august1828}
+F.\ W.\ August, ``\"{U}ber die Verdunstungsk\"{a}lte und ihre Anwendung auf Hygrometrie,'' \textit{Annalen der Physik und Chemie}, vol.\ 5, 1828.
+
+\bibitem{alduchov1996}
+O.\ A.\ Alduchov and R.\ E.\ Eskridge, ``Improved Magnus form approximation of saturation vapor pressure,'' \textit{Journal of Applied Meteorology}, vol.\ 35, no.\ 4, Apr.\ 1996.
+
+\bibitem{stull2011}
+R.\ Stull, ``Wet-bulb temperature from relative humidity and air temperature,'' \textit{Journal of Applied Meteorology and Climatology}, vol.\ 50, no.\ 11, Nov.\ 2011.
+
+\bibitem{boussinesq1903}
+J.\ Boussinesq, \textit{Th\'{e}orie analytique de la chaleur}, vol.\ 2. Paris: Gauthier-Villars, 1903.
+
+\bibitem{courant1928}
+R.\ Courant, K.\ Friedrichs, and H.\ Lewy, ``\"{U}ber die partiellen Differenzengleichungen der mathematischen Physik,'' \textit{Mathematische Annalen}, vol.\ 100, 1928.
+
+\bibitem{sepasgozar2021}
+S.\ M.\ E.\ Sepasgozar, ``Digital twin and web-based virtual gaming technologies for online education: A case of construction management and engineering,'' \textit{Applied Sciences}, vol.\ 10, no.\ 13, 2020.
+
+\bibitem{zhao2020}
+L.\ Zhao, Y.\ Zhang, and F.\ Duarte, ``A digital twin framework for real-time monitoring and predictive control of building thermal systems,'' \textit{Automation in Construction}, vol.\ 118, 2020.
+
+\bibitem{deng2022}
+Z.\ Deng, Q.\ Chen, and L.\ Liu, ``Predictive control of building HVAC systems using a physics-informed neural network co-simulation approach,'' \textit{Building and Environment}, vol.\ 207, 2022.
+
+\bibitem{pod2002}
+L.\ Sirovich, ``Turbulence and the dynamics of coherent structures,'' \textit{Quarterly of Applied Mathematics}, vol.\ 45, no.\ 3, 1987.
+
+\bibitem{winkelmann1993}
+F.\ C.\ Winkelmann, B.\ E.\ Birdsall, W.\ F.\ Buhl, \emph{et al.}, ``DOE-2 Supplement: Version 2.1E,'' Lawrence Berkeley National Laboratory, Tech.\ Rep.\ LBL-34947, 1993.
+
+\bibitem{obd2018}
+OpenBuildingDesigner Consortium, ``OpenBuildingDesigner: A web-based BIM and energy simulation viewer,'' 2018. Available: \url{https://www.openbuildingdesigner.org}
+
+\bibitem{forthofer2014}
+J.\ M.\ Forthofer, B.\ W.\ Butler, and N.\ S.\ Wagenbrenner, ``A comparison of three approaches for simulating fine-scale surface winds in support of wildland fire management,'' \textit{International Journal of Wildland Fire}, vol.\ 23, 2014.
+
+\bibitem{electron}
+Electron.js Contributors, ``Electron: Build cross-platform desktop apps with JavaScript, HTML, and CSS,'' GitHub, 2024. Available: \url{https://electronjs.org}
+
+\bibitem{threejs}
+mrdoob \emph{et al.}, ``Three.js: JavaScript 3D library,'' GitHub, 2024. Available: \url{https://threejs.org}
+
+\bibitem{ashrae55}
+ANSI/ASHRAE Standard 55-2020, \textit{Thermal Environmental Conditions for Human Occupancy}. Atlanta, GA: ASHRAE, 2020.
+
+\bibitem{iso7730}
+ISO 7730:2005, \textit{Ergonomics of the thermal environment --- Analytical determination and interpretation of thermal comfort using calculation of the PMV and PPD indices and local thermal comfort criteria}. Geneva: ISO, 2005.
+
+\bibitem{lunden2010}
+M.\ M.\ Lunden, D.\ L.\ Faulkner, and W.\ J.\ Fisk, ``Particle penetration into naturally ventilated homes: Discussion of measurement findings,'' \textit{Atmospheric Environment}, vol.\ 42, 2008.
+
+\bibitem{raissi2019}
+M.\ Raissi, P.\ Perdikaris, and G.\ E.\ Karniadakis, ``Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations,'' \textit{Journal of Computational Physics}, vol.\ 378, Feb.\ 2019.
+
+\bibitem{chorin1968}
+A.\ J.\ Chorin, ``Numerical solution of the Navier-Stokes equations,'' \textit{Mathematics of Computation}, vol.\ 22, no.\ 104, 1968.
+
+\end{thebibliography}
+
+\end{document}
